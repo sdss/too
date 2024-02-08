@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "sdss-too"
+version = "0.1.0a0"
+description = "Targets of Opportunity (ToO) for SDSS-V"
+authors = ["José Sánchez-Gallego <gallegoj@uw.edu>"]
+license = "BSD-3-Clause"
+readme = "README.md"
+homepage = "https://github.com/sdss/too"
+repository = "https://github.com/sdss/too"
+documentation = "https://sdss-too.readthedocs.org"
+keywords = ["astronomy", "software"]
+packages = [
+    { include = "too", from = "src" }
+]
+include = ["src/too/etc/*"]
+
+[tool.poetry.dependencies]
+python = "^3.12,<4.0"
+sdsstools = "^1.6.1"
+sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "main" }
+
+[tool.poetry.group.dev.dependencies]
+ipython = ">=8.21.0"
+ipdb = ">=0.12.3"
+black = ">=24.1.1"
+ruff = ">=0.1.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+fast = true
+
+[tool.ruff]
+line-length = 88
+target-version = 'py312'
+exclude = ["typings/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+unfixable = ["F841"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["too"]
+lines-after-imports = 2
+section-order = ["future", "standard-library", "typing", "third-party", "sdss", "first-party", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+typing = ["typing"]
+sdss = ["sdsstools", "clu"]
+
+[build-system]
+requires = ["poetry-core>=1.1.0"]
+build-backend = "poetry.core.masonry.api"
