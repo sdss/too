@@ -20,6 +20,9 @@ from too.datamodel import too_dtypes
 from too.tools import download_file
 
 
+__all__ = ["create_mock_too_catalogue"]
+
+
 @overload
 def get_sample_data(
     table: Literal["gaia_dr3", "twomass", "photoobj"],

@@ -11,6 +11,8 @@ from __future__ import annotations
 import polars
 
 
+__all__ = ["too_dtypes"]
+
 too_dtypes = {
     "too_id": polars.UInt64,
     "fiber_type": polars.String,
