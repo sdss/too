@@ -13,6 +13,12 @@ CREATE TABLE catalogdb.catalog (
     version_id INTEGER
 );
 
+CREATE TABLE catalogdb.version (
+    id SERIAL PRIMARY KEY,
+    plan TEXT NOT NULL UNIQUE,
+    tag TEXT NOT NULL
+);
+
 CREATE TABLE catalogdb.sdss_id_stacked (
     catalogid21 BIGINT,
     catalogid25 BIGINT,
@@ -499,6 +505,12 @@ CREATE TABLE targetdb.version (
     robostrategy BOOLEAN
 );
 
+CREATE TABLE targetdb.instrument (
+    pk SERIAL PRIMARY KEY,
+    label TEXT UNIQUE,
+    default_lambda_eff REAL
+);
+
 CREATE TABLE targetdb.carton (
     pk SERIAL PRIMARY KEY,
     mapper_pk INTEGER,
@@ -592,6 +604,9 @@ CREATE INDEX ON targetdb.carton_to_target (carton_pk);
 CREATE INDEX ON targetdb.carton_to_target (target_pk);
 CREATE INDEX ON targetdb.magnitude (carton_to_target_pk);
 CREATE INDEX ON targetdb.carton (version_pk);
+
+INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
+INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;

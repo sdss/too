@@ -77,6 +77,3 @@ jobs:
         run: |
           pip install black
           black --check src/too
-
-      - run: |
-          ls -la ~/.cache/sdss/too/samples/sdss5db_too_test
