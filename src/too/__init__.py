@@ -8,7 +8,12 @@
 
 from __future__ import annotations
 
+import sdssdb
+
 from sdsstools import get_logger, get_package_version
+
+
+sdssdb.autoconnect = False
 
 
 NAME = "sdss-too"
