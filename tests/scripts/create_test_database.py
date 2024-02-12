@@ -27,7 +27,6 @@ def create_test_database(
     user: str | None = None,
     host: str | None = None,
     port: int | None = None,
-    confirm: bool = True,
 ):
     """Recreates a simple copy of ``catalogdb`` for testing.
 

@@ -26,10 +26,38 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
+      - name: Cache sample files
+        id: cache-samples
+        uses: actions/cache@v4
+        with:
+          path: .config/sdss
+          key: ${{ runner.os }}-config-sdss
+
+      - name: Install Postgresql
+        uses: ikalnytskyi/action-setup-postgres@v5
+
+      - name: Install Q3C
+        run: |
+          wget https://github.com/segasai/q3c/archive/refs/tags/v2.0.1.tar.gz
+          tar xvf v2.0.1.tar.gz
+          cd q3c-2.0.1
+          make
+          make install
+
+      - name: Create database
+        run: |
+          createdb sdss5db_too_test
+          psql -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
+
       - name: Install dependencies
         run: |
           pip install --upgrade wheel pip setuptools
           pip install .
+
+      - name: Populate database
+        run: |
+          cd tests/scripts
+          python create_test_database.py
 
       - name: Lint with ruff
         run: |
