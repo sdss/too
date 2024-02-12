@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import pytest
 
+from too.mock import create_mock_too_catalogue
+
 
 DBNAME: str = "sdss5db_too_test"
 
@@ -25,3 +27,10 @@ def sdss5db():
     yield
 
     sdss5db.database.close()
+
+
+@pytest.fixture(scope="session")
+def too_mock():
+    sample = create_mock_too_catalogue()
+
+    yield sample
