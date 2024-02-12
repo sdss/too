@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import subprocess
 
@@ -52,6 +53,12 @@ def create_test_database(
         port will be used.
 
     """
+
+    if os.environ.get("CI") == "true":
+        log.warning("Running in CI.")
+        user = "postgres"
+        host = "localhost"
+        port = 5432
 
     log.info("Verifying that the database exists.")
 
