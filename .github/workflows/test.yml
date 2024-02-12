@@ -38,12 +38,12 @@ jobs:
 
       - name: Install Q3C
         run: |
-          apt install -y postgresql-dev
+          sudo apt-get install -y postgresql-dev
           wget https://github.com/segasai/q3c/archive/refs/tags/v2.0.1.tar.gz
           tar xvf v2.0.1.tar.gz
           cd q3c-2.0.1
           make
-          make install
+          sudo make install
 
       - name: Create database
         run: |
