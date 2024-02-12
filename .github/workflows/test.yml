@@ -46,11 +46,15 @@ jobs:
           cd q3c-2.0.1
           make
           sudo make install
+        env:
+          PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
       - name: Create database
         run: |
           createdb sdss5db_too_test
-          psql ${{ steps.postgres.outputs.connection-uri }} -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
+          psql -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
+        env:
+          PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
       - name: Install dependencies
         run: |
