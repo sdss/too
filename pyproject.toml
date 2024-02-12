@@ -12,18 +12,24 @@ keywords = ["astronomy", "software"]
 packages = [
     { include = "too", from = "src" }
 ]
-include = ["src/too/etc/*"]
+include = ["src/too/data/*"]
 
 [tool.poetry.dependencies]
 python = "^3.12,<4.0"
 sdsstools = "^1.6.1"
 sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "main" }
+adbc-driver-postgresql = "^0.9.0"
+polars = "^0.20.7"
+httpx = "^0.26.0"
+rich = "^13.7.0"
+sdssdb = "^0.8.3"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.21.0"
 ipdb = ">=0.12.3"
 black = ">=24.1.1"
 ruff = ">=0.1.0"
+pandas-stubs = "^2.1.4.231227"
 
 [tool.black]
 line-length = 88
