@@ -65,6 +65,8 @@ jobs:
         run: |
           cd tests/scripts
           python create_test_database.py
+        env:
+          PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
       - name: Lint with ruff
         run: |
