@@ -83,7 +83,7 @@ def create_test_database(
     for file in files:
         if not (CACHE_PATH / file).exists():
             url = f"{BASE_URL}/{file}"
-            log.info(f"File {file!r} not found in cache. Downloading from {url}.")
+            log.info(f"File {file!r} not found in cache. Downloading from {url}")
             download_file(url, CACHE_PATH, transient_progress=True, console=console)
 
     log.info("Proceeding with the population of the test database.")
