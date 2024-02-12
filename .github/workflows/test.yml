@@ -68,16 +68,6 @@ jobs:
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
-      - name: Lint with ruff
-        run: |
-          pip install ruff
-          ruff src/too
-
-      - name: Lint with black
-        run: |
-          pip install black
-          black --check src/too
-
       - name: Test with pytest
         run: |
           pip install pytest pytest-sugar pytest-cov coverage
