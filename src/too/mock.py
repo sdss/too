@@ -122,8 +122,15 @@ def get_sample_targets(
             "psfmag_z": "z_mag",
         }
 
+    if "source_id" in sample.columns:
+        sample = sample.cast({"source_id": polars.Int64})
+    elif "pts_key" in sample.columns:
+        sample = sample.cast({"pts_key": polars.Int32})
+
     sample = sample.select(*list(col_mapping), "catalogid", "sdss_id")
     sample = sample.rename(col_mapping)
+    sample = sample.cast({"catalogid": polars.Int64, "sdss_id": polars.Int64})
+
     sample = sample.with_columns(polars.col(["ra", "dec"]).cast(polars.Float64))
 
     return sample
@@ -254,7 +261,7 @@ def create_mock_too_catalogue(
         sdss_id=polars.when(polars.col.keep_cid).then(polars.col.sdss_id),
     )
     df.drop_in_place("keep_cid")
-    df = df.sample(df.height)  # Shuffle
+    df = df.sample(df.height, shuffle=True)  # Shuffle
 
     df = df.with_columns(polars.int_range(1, df.height + 1).alias("too_id"))
 
@@ -268,6 +275,7 @@ def create_mock_too_catalogue(
         observed=False,
         active=True,
         priority=polars.lit(5, dtype=polars.Int16),
+        n_exposures=polars.lit(3, dtype=polars.Int16),
     )
 
     return df

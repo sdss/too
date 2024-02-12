@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import pytest
+from sdssdb.peewee.sdss5db import catalogdb
 
 from too.mock import create_mock_too_catalogue
 
@@ -17,16 +18,11 @@ DBNAME: str = "sdss5db_too_test"
 
 
 @pytest.fixture(autouse=True, scope="session")
-def sdss5db():
-    """A fixture that returns a connection to the ToO test database."""
+def connect_and_revert_database():
+    """Reverts the database to the original state."""
 
-    from sdssdb.peewee import sdss5db
-
-    sdss5db.database.connect(DBNAME)
-
-    yield
-
-    sdss5db.database.close()
+    catalogdb.database.connect(DBNAME)
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
 
 
 @pytest.fixture(scope="session")

@@ -8,17 +8,22 @@
 
 from __future__ import annotations
 
+from typing import Mapping
+
 import polars
+import polars.type_aliases as pta
 
 
 __all__ = ["too_dtypes"]
 
-too_dtypes = {
-    "too_id": polars.UInt64,
+PolarsTypeMapping = Mapping[str, pta.PolarsDataType]
+
+too_dtypes: PolarsTypeMapping = {
+    "too_id": polars.Int64,
     "fiber_type": polars.String,
-    "catalogid": polars.UInt64,
-    "sdss_id": polars.UInt64,
-    "gaia_dr3_source_id": polars.UInt64,
+    "catalogid": polars.Int64,
+    "sdss_id": polars.Int64,
+    "gaia_dr3_source_id": polars.Int64,
     "twomass_pts_key": polars.Int32,
     "sky_brightness_mode": polars.String,
     "ra": polars.Float64,
@@ -48,7 +53,13 @@ too_dtypes = {
     "observed": polars.Boolean,
 }
 
-too_fixed_columns = ["catalogid", "sdss_id", "gaia_dr3_source_id", "twomass_pts_key"]
+too_fixed_columns = [
+    "catalogid",
+    "sdss_id",
+    "gaia_dr3_source_id",
+    "twomass_pts_key",
+    "fiber_type",
+]
 mag_columns = [
     "u_mag",
     "g_mag",
@@ -60,4 +71,4 @@ mag_columns = [
     "gaia_g_mag",
     "h_mag",
 ]
-fiber_type_values = ["APOGEE", "BOSS", ""]
+fiber_type_values = ["APOGEE", "BOSS"]
