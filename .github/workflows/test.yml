@@ -30,7 +30,7 @@ jobs:
         id: cache-samples
         uses: actions/cache@v4
         with:
-          path: ${{ env.HOME }}/.config/sdss
+          path: /home/runner/.config/sdss
           key: ${{ runner.os }}-config-sdss
 
       - name: Install Postgresql
