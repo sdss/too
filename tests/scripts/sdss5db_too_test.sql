@@ -208,10 +208,10 @@ CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (target_id);
 CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (best);
 CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (version_id);
 
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj (catalogid);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj (target_id);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj (best);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj (version_id);
+CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (catalogid);
+CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (target_id);
+CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (best);
+CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (version_id);
 
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (catalogid);
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (target_id);
