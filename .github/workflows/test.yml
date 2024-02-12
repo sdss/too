@@ -26,11 +26,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Cache sample files
+      - name: Restore sample files
         id: cache-samples
         uses: actions/cache@v4
         with:
-          path: .config/sdss
+          path: ${{ env.HOME }}/.config/sdss
           key: ${{ runner.os }}-config-sdss
 
       - name: Install Postgresql

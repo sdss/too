@@ -56,9 +56,6 @@ def create_test_database(
 
     if os.environ.get("CI") == "true":
         log.warning("Running in CI.")
-        # user = "postgres"
-        # host = "localhost"
-        # port = 5432
 
     log.info("Verifying that the database exists.")
 
