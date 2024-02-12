@@ -11,6 +11,8 @@ from __future__ import annotations
 from conftest import DBNAME
 from sdssdb.peewee.sdss5db import catalogdb
 
+from too.models import ToO_Target
+
 
 def test_database_exists():
     assert catalogdb.Catalog.table_exists()
@@ -35,3 +37,7 @@ def test_models_exist():
     assert catalogdb.CatalogToTwoMassPSC.table_exists()  # type: ignore
     assert catalogdb.TwoMassPSC.select().count() > 1
     assert catalogdb.CatalogToTwoMassPSC.select().count() > 1  # type: ignore
+
+    ToO_Target.bind(catalogdb.database)
+    assert ToO_Target.table_exists()
+    assert ToO_Target.select().count() == 0
