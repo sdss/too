@@ -40,6 +40,9 @@ def download_file(
 
     with tempfile.NamedTemporaryFile() as download_file:
         with httpx.stream("GET", url) as response:
+            if response.status_code != 200:
+                raise RuntimeError(f"URL {url!r} does not exist.")
+
             total = int(response.headers["Content-Length"])
 
             with rich.progress.Progress(
