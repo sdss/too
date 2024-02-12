@@ -30,6 +30,10 @@ ipdb = ">=0.12.3"
 black = ">=24.1.1"
 ruff = ">=0.1.0"
 pandas-stubs = "^2.1.4.231227"
+pytest = "^8.0.0"
+pytest-sugar = "^1.0.0"
+pytest-cov = "^4.1.0"
+coverage = "^7.4.1"
 
 [tool.black]
 line-length = 88
