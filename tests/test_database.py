@@ -11,7 +11,7 @@ from __future__ import annotations
 from conftest import DBNAME
 from sdssdb.peewee.sdss5db import catalogdb
 
-from too.models import ToO_Target
+from too.database import ToO_Target
 
 
 def test_database_exists():

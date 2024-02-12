@@ -28,6 +28,6 @@ assert console is not None
 __version__ = get_package_version(path=__file__, package_name=NAME)
 
 
+from .database import *
 from .datamodel import *
 from .mock import *
-from .models import *
