@@ -87,7 +87,7 @@ CREATE TABLE catalogdb.sdss_dr13_photoobj (
     flags BIGINT
 );
 
-CREATE TABLE catalogdb.catalog_to_sdss_dr13_photoobj (
+CREATE TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary (
     catalogid BIGINT,
     target_id BIGINT,
     version_id SMALLINT,
@@ -185,7 +185,7 @@ CREATE TABLE targetdb.magnitude (
 \copy catalogdb.catalog FROM PROGRAM 'gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM 'gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM 'gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
-\copy catalogdb.catalog_to_sdss_dr13_photoobj FROM PROGRAM 'gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
+\copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM 'gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_twomass_psc FROM PROGRAM 'gzip -dc catalog_to_twomass_psc.csv.gz' WITH CSV HEADER;
 \copy catalogdb.gaia_dr3_source FROM PROGRAM 'gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM 'gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
@@ -194,7 +194,7 @@ CREATE TABLE targetdb.magnitude (
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
 ALTER TABLE catalogdb.catalog_to_gaia_dr3_source ADD PRIMARY KEY (catalogid, target_id, version_id);
-ALTER TABLE catalogdb.catalog_to_sdss_dr13_photoobj ADD PRIMARY KEY (catalogid, target_id, version_id);
+ALTER TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary ADD PRIMARY KEY (catalogid, target_id, version_id);
 ALTER TABLE catalogdb.catalog_to_twomass_psc ADD PRIMARY KEY (catalogid, target_id, version_id);
 ALTER TABLE catalogdb.sdss_dr13_photoobj ADD PRIMARY KEY (objid);
 ALTER TABLE catalogdb.gaia_dr3_source ADD PRIMARY KEY (source_id);
@@ -236,7 +236,7 @@ INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;
 VACUUM ANALYZE catalogdb.catalog_to_gaia_dr3_source;
-VACUUM ANALYZE catalogdb.catalog_to_sdss_dr13_photoobj;
+VACUUM ANALYZE catalogdb.catalog_to_sdss_dr13_photoobj_primary;
 VACUUM ANALYZE catalogdb.catalog_to_twomass_psc;
 VACUUM ANALYZE catalogdb.sdss_dr13_photoobj;
 VACUUM ANALYZE catalogdb.gaia_dr3_source;
