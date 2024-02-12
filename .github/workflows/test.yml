@@ -30,7 +30,7 @@ jobs:
         id: cache-samples
         uses: actions/cache@v4
         with:
-          path: ~/.config/sdss
+          path: ~/.cache/sdss/too/samples/sdss5db_too_test
           key: ${{ runner.os }}-config-sdss
 
       - name: Install Postgresql
@@ -79,4 +79,4 @@ jobs:
           black --check src/too
 
       - run: |
-          ls -la ~/.cache/sdss
+          ls -la ~/.cache/sdss/too/samples/sdss5db_too_test
