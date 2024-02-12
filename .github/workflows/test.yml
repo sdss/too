@@ -77,3 +77,6 @@ jobs:
         run: |
           pip install black
           black --check src/too
+
+      - run: |
+          ls -la ~/.cache/sdss
