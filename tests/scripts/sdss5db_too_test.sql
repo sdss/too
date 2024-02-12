@@ -143,7 +143,7 @@ CREATE TABLE catalogdb.too_target (
     priority SMALLINT,
     active BOOLEAN,
     expiration_date INTEGER,
-    observed BOOLEAN,
+    observed BOOLEAN
 );
 
 CREATE TABLE targetdb.target (
