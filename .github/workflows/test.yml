@@ -35,6 +35,7 @@ jobs:
 
       - name: Install Postgresql
         uses: ikalnytskyi/action-setup-postgres@v5
+        id: postgres
 
       - name: Install Q3C
         run: |
@@ -49,7 +50,7 @@ jobs:
       - name: Create database
         run: |
           createdb sdss5db_too_test
-          psql -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
+          psql ${{ steps.postgres.outputs.connection-uri }} -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
 
       - name: Install dependencies
         run: |
