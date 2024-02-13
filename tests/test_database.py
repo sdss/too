@@ -15,6 +15,7 @@ from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import (
     ToO_Target,
+    connect_to_database,
     get_database_uri,
     load_too_targets,
     validate_too_targets,
@@ -28,6 +29,15 @@ def test_database_exists():
 
     n_catalog = catalogdb.Catalog.select().count()
     assert n_catalog > 1000000 and n_catalog < 10000000
+
+
+def test_connect_to_database_fails():
+    with pytest.raises(RuntimeError):
+        connect_to_database("non_existent_db")
+
+    # Reconnect the database for the following tests.
+    connect_to_database(DBNAME)
+    assert catalogdb.database.connected
 
 
 def test_models_exist():

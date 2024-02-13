@@ -14,6 +14,7 @@ import adbc_driver_postgresql.dbapi as dbapi
 import peewee
 import polars
 from sdssdb.peewee import BaseModel
+from sdssdb.peewee.sdss5db import catalogdb
 
 from too import log
 from too.datamodel import mag_columns, too_dtypes
@@ -64,6 +65,32 @@ class ToO_Target(ToOBaseModel):
 
     class Meta:
         table_name = "too_target"
+
+
+def connect_to_database(
+    dbname: str,
+    host: str = "localhost",
+    port: int | None = None,
+    user: str | None = None,
+    password: str | None = None,
+):
+    """Connects the ``sdssdb`` ``sdss5db`` models to the database."""
+
+    # Add this before connecting so that when the models are reloaded
+    # the CatalogToToO_Target model is added automatically.
+    ToOBaseModel.bind(catalogdb.database)
+    catalogdb.database.models["catalogdb.too_target"] = ToO_Target
+
+    catalogdb.database.connect(
+        dbname,
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+    )
+
+    if not catalogdb.database.connected:
+        raise RuntimeError("Could not connect to the database.")
 
 
 def get_database_uri(

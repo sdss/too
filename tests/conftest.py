@@ -15,6 +15,7 @@ import polars
 import pytest
 from sdssdb.peewee.sdss5db import catalogdb
 
+from too.database import connect_to_database
 from too.mock import create_mock_too_catalogue
 
 
@@ -31,7 +32,7 @@ DBNAME: str = "sdss5db_too_test"
 def connect_and_revert_database():
     """Reverts the database to the original state."""
 
-    catalogdb.database.connect(DBNAME)
+    connect_to_database(DBNAME)
     catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
 
 
