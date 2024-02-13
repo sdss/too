@@ -12,6 +12,7 @@ import pathlib
 
 import peewee
 import polars
+
 from sdssdb.peewee import BaseModel
 from sdssdb.peewee.sdss5db import catalogdb
 

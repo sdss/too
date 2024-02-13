@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import polars
 from conftest import DBNAME
+
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import get_database_uri, load_too_targets

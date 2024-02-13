@@ -17,7 +17,7 @@ include = []
 [tool.poetry.dependencies]
 python = "^3.12,<4.0"
 sdsstools = "^1.6.1"
-sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "main" }
+sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "too-xmatch" }
 adbc-driver-postgresql = "^0.9.0"
 polars = "^0.20.7"
 httpx = "^0.26.0"
@@ -60,7 +60,7 @@ section-order = ["future", "standard-library", "typing", "third-party", "sdss", 
 
 [tool.ruff.lint.isort.sections]
 typing = ["typing"]
-sdss = ["sdsstools", "clu"]
+sdss = ["sdsstools", "clu", "target_selection", "sdssdb"]
 
 [tool.pytest.ini_options]
 addopts = "--cov too --cov-report xml --cov-report html --cov-report term -W ignore"

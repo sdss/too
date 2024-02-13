@@ -13,6 +13,7 @@ import random
 import numpy
 import polars
 import pytest
+
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import connect_to_database

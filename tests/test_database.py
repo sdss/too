@@ -11,6 +11,7 @@ from __future__ import annotations
 import polars
 import pytest
 from conftest import DBNAME
+
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import (
