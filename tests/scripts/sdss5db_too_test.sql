@@ -146,6 +146,14 @@ CREATE TABLE catalogdb.too_target (
     observed BOOLEAN
 );
 
+CREATE TABLE catalogdb.catalog_to_too_target (
+    catalogid BIGINT,
+    target_id BIGINT,
+    version_id SMALLINT,
+    distance REAL,
+    best BOOLEAN
+);
+
 CREATE TABLE targetdb.target (
     pk BIGSERIAL PRIMARY KEY,
     ra DOUBLE PRECISION,
@@ -235,6 +243,14 @@ ALTER TABLE catalogdb.sdss_dr13_photoobj ADD PRIMARY KEY (objid);
 ALTER TABLE catalogdb.gaia_dr3_source ADD PRIMARY KEY (source_id);
 ALTER TABLE catalogdb.twomass_psc ADD PRIMARY KEY (pts_key);
 
+ALTER TABLE ONLY catalogdb.too_target
+    ADD CONSTRAINT gaia_dr3_source_id_fk
+    FOREIGN KEY (gaia_dr3_source_id) REFERENCES catalogdb.gaia_dr3_source(source_id);
+
+ALTER TABLE ONLY catalogdb.too_target
+    ADD CONSTRAINT twomass_pts_key_fk
+    FOREIGN KEY (twomass_pts_key) REFERENCES catalogdb.twomass_psc(pts_key);
+
 CREATE INDEX ON catalogdb.catalog (version_id);
 CREATE INDEX ON catalogdb.catalog (q3c_ang2ipix(ra, dec));
 
@@ -253,11 +269,22 @@ CREATE INDEX ON catalogdb.catalog_to_twomass_psc (target_id);
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (best);
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (version_id);
 
+CREATE INDEX ON catalogdb.catalog_to_too_target (catalogid);
+CREATE INDEX ON catalogdb.catalog_to_too_target (target_id);
+CREATE INDEX ON catalogdb.catalog_to_too_target (best);
+CREATE INDEX ON catalogdb.catalog_to_too_target (version_id);
+
 CREATE INDEX ON catalogdb.gaia_dr3_source (q3c_ang2ipix(ra, dec));
 
 CREATE INDEX ON catalogdb.sdss_dr13_photoobj (q3c_ang2ipix(ra, dec));
 
 CREATE INDEX ON catalogdb.twomass_psc (q3c_ang2ipix(ra, decl));
+
+CREATE INDEX ON catalogdb.too_target (catalogid);
+CREATE INDEX ON catalogdb.too_target (sdss_id);
+CREATE INDEX ON catalogdb.too_target (gaia_dr3_source_id);
+CREATE INDEX ON catalogdb.too_target (twomass_pts_key);
+CREATE INDEX ON catalogdb.too_target (q3c_ang2ipix(ra, dec));
 
 CREATE INDEX ON targetdb.target (catalogid);
 CREATE INDEX ON targetdb.carton_to_target (carton_pk);
