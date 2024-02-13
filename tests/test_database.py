@@ -92,3 +92,12 @@ def test_load_too_targets(too_mock: polars.DataFrame):
     n_added = load_too_targets(too_mock[5:100000], get_database_uri(DBNAME))
     assert n_added == 99990
     assert ToO_Target.select().count() == 100000
+
+
+def test_load_too_targets_from_file(too_mock: polars.DataFrame, tmp_path):
+    parquet_file = tmp_path / "too_mock.parquet"
+    too_mock.write_parquet(parquet_file)
+
+    n_added = load_too_targets(parquet_file, get_database_uri(DBNAME))
+
+    assert n_added > 0

@@ -17,7 +17,7 @@ from too.mock import create_mock_too_catalogue
 DBNAME: str = "sdss5db_too_test"
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="module")
 def connect_and_revert_database():
     """Reverts the database to the original state."""
 
