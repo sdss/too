@@ -12,7 +12,7 @@ keywords = ["astronomy", "software"]
 packages = [
     { include = "too", from = "src" }
 ]
-include = ["src/too/data/*"]
+include = []
 
 [tool.poetry.dependencies]
 python = "^3.12,<4.0"
