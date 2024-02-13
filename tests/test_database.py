@@ -13,7 +13,13 @@ import pytest
 from conftest import DBNAME
 from sdssdb.peewee.sdss5db import catalogdb
 
-from too.database import ToO_Target, get_database_uri, load_too_targets
+from too.database import (
+    ToO_Target,
+    get_database_uri,
+    load_too_targets,
+    validate_too_targets,
+)
+from too.exceptions import ValidationError
 
 
 def test_database_exists():
@@ -76,6 +82,51 @@ def test_get_database_uri(
 def test_get_database_uri_password_fails():
     with pytest.raises(ValueError):
         get_database_uri("testdb", password="1234")
+
+
+def test_validate_too_target_passes(too_mock: polars.DataFrame):
+    assert validate_too_targets(too_mock)
+
+
+@pytest.mark.parametrize(
+    "test_mode,error_message",
+    [
+        ("too_id", "Duplicate too_id in ToO targets."),
+        ("schema", "Invalid schema for ToO targets."),
+        ("radec_null", "Null ra/dec found in ToO targets."),
+        ("radec_invalid", "Invalid ra or dec found in ToO targets."),
+        ("n_exposures", "Null 'n_exposures' column values found"),
+        ("active", "Null 'active' column values found"),
+        ("mag_columns", "ToOs found with missing magnitudes"),
+    ],
+)
+def test_validate_too_target_fails(
+    too_mock: polars.DataFrame,
+    test_mode: str,
+    error_message: str,
+):
+    too_mock_test = too_mock.clone()
+
+    if test_mode == "too_id":
+        too_mock_test[0, "too_id"] = too_mock_test[1, "too_id"]
+    elif test_mode == "schema":
+        too_mock_test.drop_in_place("too_id")
+    elif test_mode == "radec_null":
+        too_mock_test[0, "ra"] = None
+    elif test_mode == "radec_invalid":
+        too_mock_test[0, "ra"] = 360
+    elif test_mode == "n_exposures":
+        too_mock_test[0, "n_exposures"] = None
+    elif test_mode == "active":
+        too_mock_test[0, "active"] = None
+    elif test_mode == "mag_columns":
+        too_mock_test = too_mock_test.with_columns(
+            gaia_g_mag=polars.lit(None, dtype=polars.Float32),
+            h_mag=polars.lit(None, dtype=polars.Float32),
+        )
+
+    with pytest.raises(ValidationError, match=error_message):
+        validate_too_targets(too_mock_test)
 
 
 def test_load_too_targets(too_mock: polars.DataFrame):

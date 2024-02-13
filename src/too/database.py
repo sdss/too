@@ -16,7 +16,8 @@ import polars
 from sdssdb.peewee import BaseModel
 
 from too import log
-from too.datamodel import too_dtypes
+from too.datamodel import mag_columns, too_dtypes
+from too.exceptions import ValidationError
 
 
 __all__ = ["ToO_Target"]
@@ -86,6 +87,63 @@ def get_database_uri(
     host_port: str = f"{host}" if port is None else f"{host}:{port}"
 
     return f"postgresql://{auth}{host_port}/{dbname}"
+
+
+def validate_too_targets(targets: polars.DataFrame):
+    """Validates a list of ToO targets.
+
+    Checks the following conditions:
+
+    - The dataframe schema matches the ``too_target`` schema.
+    - The ``too_id`` column is unique.
+    - ``ra`` and ``dec`` are present and valid.
+    - At least one of the magnitude columns is present.
+    - The number of exposures is set and valid.
+    - The ``active`` column is set.
+
+    """
+
+    n_targets = targets.height
+
+    if targets.schema != too_dtypes:
+        raise ValidationError("Invalid schema for ToO targets.")
+
+    if targets.unique("too_id").height != n_targets:
+        raise ValidationError("Duplicate too_id in ToO targets.")
+
+    targets_coords = targets.select(["ra", "dec"]).drop_nulls()
+    if len(targets_coords) < n_targets:
+        raise ValidationError("Null ra/dec found in ToO targets.")
+
+    bad_ra = (targets_coords["ra"] >= 360) | (targets_coords["ra"] < 0)
+    bad_dec = (targets_coords["dec"] >= 90) | (targets_coords["dec"] <= -90)
+    if bad_ra.any() or bad_dec.any():
+        raise ValidationError("Invalid ra or dec found in ToO targets.")
+
+    if targets["n_exposures"].is_null().any():
+        raise ValidationError("Null 'n_exposures' column values found in ToO targets.")
+
+    if targets["active"].is_null().any():
+        raise ValidationError("Null 'active' column values found in ToO targets.")
+
+    # Get magnitude columns and filted rows that do not have any value set.
+    # This is equivalent to Pandas .drop(axis=1). In Polars is a bit harder. See
+    # https://github.com/pola-rs/polars/issues/1613
+    mag_data = targets[mag_columns]
+    any_mags = mag_data.filter(
+        ~polars.fold(
+            True,
+            lambda acc, s: acc & s.is_null(),
+            polars.all(),
+        )
+    )
+    if len(any_mags) < n_targets:
+        raise ValidationError(
+            "ToOs found with missing magnitudes. "
+            "At least one magnitude value is required."
+        )
+
+    return True
 
 
 def load_too_targets(
