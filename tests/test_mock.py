@@ -14,3 +14,6 @@ import polars
 def test_mock_sample(too_mock: polars.DataFrame):
     assert isinstance(too_mock, polars.DataFrame)
     assert too_mock.height > 500000
+
+    # Check reproducibility of random numbers.
+    assert too_mock[12, "catalogid"] == 63050395369450584

@@ -8,10 +8,20 @@
 
 from __future__ import annotations
 
+import random
+
+import numpy
+import polars
 import pytest
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too.mock import create_mock_too_catalogue
+
+
+SEED: int = 42
+random.seed(SEED)
+numpy.random.seed(SEED)
+polars.set_random_seed(SEED)
 
 
 DBNAME: str = "sdss5db_too_test"
