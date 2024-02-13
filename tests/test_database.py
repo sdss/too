@@ -94,10 +94,28 @@ def test_load_too_targets(too_mock: polars.DataFrame):
     assert ToO_Target.select().count() == 100000
 
 
-def test_load_too_targets_from_file(too_mock: polars.DataFrame, tmp_path):
-    parquet_file = tmp_path / "too_mock.parquet"
-    too_mock.write_parquet(parquet_file)
+@pytest.mark.parametrize("extension", ["parquet", "csv", "json"])
+def test_load_too_targets_from_file(
+    too_mock: polars.DataFrame,
+    truncate_too_target,
+    tmp_path,
+    extension: str,
+):
 
-    n_added = load_too_targets(parquet_file, get_database_uri(DBNAME))
+    too_mock_sample = too_mock[0:1000]
 
-    assert n_added > 0
+    if extension == "parquet":
+        file = tmp_path / "too_mock.parquet"
+        too_mock_sample.write_parquet(file)
+    elif extension == "csv":
+        file = tmp_path / "too_mock.csv"
+        too_mock_sample.write_csv(file)
+    elif extension == "json":
+        with pytest.raises(ValueError):
+            load_too_targets("too_mock.json", get_database_uri(DBNAME))
+        return
+
+    n_added = load_too_targets(file, get_database_uri(DBNAME))
+
+    assert n_added == 1000
+    assert ToO_Target.select().count() == n_added

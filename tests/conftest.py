@@ -25,6 +25,14 @@ def connect_and_revert_database():
     catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
 
 
+@pytest.fixture()
+def truncate_too_target():
+    """Truncates ``too_target``."""
+
+    assert catalogdb.database.connected, "Database is not connected"
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
+
+
 @pytest.fixture(scope="session")
 def too_mock():
     sample = create_mock_too_catalogue()

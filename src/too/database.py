@@ -99,7 +99,14 @@ def load_too_targets(
         raise NotImplementedError("update_existing not yet implemented.")
 
     if isinstance(targets, (str, pathlib.Path)):
-        targets = polars.read_parquet(targets)
+        path = pathlib.Path(targets)
+
+        if path.suffix == ".parquet":
+            targets = polars.read_parquet(targets)
+        elif path.suffix == ".csv":
+            targets = polars.read_csv(targets, schema=too_dtypes)
+        else:
+            raise ValueError(f"Invalid file type {path.suffix!r}")
 
     with dbapi.connect(database_uri) as conn:
         current_targets = polars.read_database(
