@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import pathlib
 
-import adbc_driver_postgresql.dbapi as dbapi
 import peewee
 import polars
 from sdssdb.peewee import BaseModel
@@ -62,6 +61,8 @@ class ToO_Target(ToOBaseModel):
     active = peewee.BooleanField()
     expiration_date = peewee.IntegerField()
     observed = peewee.BooleanField()
+
+    _meta: peewee.Metadata
 
     class Meta:
         table_name = "too_target"
@@ -193,12 +194,12 @@ def load_too_targets(
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
 
-    with dbapi.connect(database_uri) as conn:
-        current_targets = polars.read_database(
-            "SELECT * from catalogdb.too_target",
-            conn,  # type: ignore
-        )
-        current_targets = current_targets.cast(too_dtypes)  # type: ignore
+    current_targets = polars.read_database_uri(
+        "SELECT * from catalogdb.too_target",
+        database_uri,
+        engine="adbc",
+    )
+    current_targets = current_targets.cast(too_dtypes)  # type: ignore
 
     new_targets = targets.filter(~polars.col.too_id.is_in(current_targets["too_id"]))
 
