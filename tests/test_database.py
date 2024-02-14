@@ -15,7 +15,6 @@ from conftest import DBNAME
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import (
-    ToO_Target,
     connect_to_database,
     get_database_uri,
     load_too_targets,
@@ -57,9 +56,9 @@ def test_models_exist():
     assert catalogdb.TwoMassPSC.select().count() > 1
     assert catalogdb.CatalogToTwoMassPSC.select().count() > 1  # type: ignore
 
-    ToO_Target.bind(catalogdb.database)
-    assert ToO_Target.table_exists()
-    assert ToO_Target.select().count() == 0
+    catalogdb.ToO_Target.bind(catalogdb.database)
+    assert catalogdb.ToO_Target.table_exists()
+    assert catalogdb.ToO_Target.select().count() == 0
 
 
 @pytest.mark.parametrize(
@@ -141,19 +140,19 @@ def test_validate_too_target_fails(
 
 
 def test_load_too_targets(too_mock: polars.DataFrame):
-    n_added = load_too_targets(too_mock[0:10], get_database_uri(DBNAME))
+    n_added = load_too_targets(too_mock[0:10], catalogdb.database)
 
     assert n_added == 10
-    assert ToO_Target.select().count() == 10
+    assert catalogdb.ToO_Target.select().count() == 10
 
     # Repeat. No new targets should be added.
-    n_added = load_too_targets(too_mock[0:10], get_database_uri(DBNAME))
+    n_added = load_too_targets(too_mock[0:10], catalogdb.database)
     assert n_added == 0
-    assert ToO_Target.select().count() == 10
+    assert catalogdb.ToO_Target.select().count() == 10
 
-    n_added = load_too_targets(too_mock[5:100000], get_database_uri(DBNAME))
+    n_added = load_too_targets(too_mock[5:100000], catalogdb.database)
     assert n_added == 99990
-    assert ToO_Target.select().count() == 100000
+    assert catalogdb.ToO_Target.select().count() == 100000
 
 
 @pytest.mark.parametrize("extension", ["parquet", "csv", "json"])
@@ -174,10 +173,10 @@ def test_load_too_targets_from_file(
         too_mock_sample.write_csv(file)
     elif extension == "json":
         with pytest.raises(ValueError):
-            load_too_targets("too_mock.json", get_database_uri(DBNAME))
+            load_too_targets("too_mock.json", catalogdb.database)
         return
 
-    n_added = load_too_targets(file, get_database_uri(DBNAME))
+    n_added = load_too_targets(file, catalogdb.database)
 
     assert n_added == 1000
-    assert ToO_Target.select().count() == n_added
+    assert catalogdb.ToO_Target.select().count() == n_added

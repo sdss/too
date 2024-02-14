@@ -9,11 +9,10 @@
 from __future__ import annotations
 
 import polars
-from conftest import DBNAME
 
 from sdssdb.peewee.sdss5db import catalogdb
 
-from too.database import get_database_uri, load_too_targets
+from too.database import load_too_targets
 from too.xmatch import xmatch_too_targets
 
 
@@ -31,7 +30,7 @@ def test_xmatch(too_mock: polars.DataFrame):
         .otherwise(polars.col.catalogid)
     )
 
-    load_too_targets(too_mock_sample, get_database_uri(DBNAME))
+    load_too_targets(too_mock_sample, catalogdb.database)
 
     xmatch_too_targets(catalogdb.database)
 
