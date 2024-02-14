@@ -133,13 +133,15 @@ def validate_too_targets(targets: polars.DataFrame):
 
 def load_too_targets(
     targets: polars.DataFrame | str | pathlib.Path,
-    database_uri: str,
+    database: PeeweeDatabaseConnection,
     update_existing: bool = False,
 ):
     """Loads a list of ToO targets into the database."""
 
     if update_existing:
         raise NotImplementedError("update_existing not yet implemented.")
+
+    assert database.connected, "Database is not connected."
 
     if isinstance(targets, (str, pathlib.Path)):
         path = pathlib.Path(targets)
@@ -150,6 +152,8 @@ def load_too_targets(
             targets = polars.read_csv(targets, schema=too_dtypes)
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
+
+    database_uri = get_database_uri(database.dbname, **database.connect_params)
 
     current_targets = polars.read_database_uri(
         "SELECT * from catalogdb.too_target",
@@ -164,12 +168,15 @@ def load_too_targets(
         log.info("No new ToO targets to add.")
         return 0
 
-    log.info(f"Loading {len(new_targets)} new ToO targets into the database.")
+    log.info(f"Loading {len(new_targets)} new ToO targets into catalogdb.too_target.")
     n_added = new_targets.write_database(
         "catalogdb.too_target",
         database_uri,
         if_table_exists="append",
         engine="adbc",
     )
+
+    log.debug("Running VACUUM ANALYZE on catalogdb.too_target")
+    database.execute_sql("VACUUM ANALYZE catalogdb.too_target;")
 
     return n_added
