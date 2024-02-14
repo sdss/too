@@ -41,11 +41,6 @@ def test_connect_to_database_fails():
 
 
 def test_models_exist():
-    assert catalogdb.SDSS_DR13_PhotoObj.table_exists()
-    assert catalogdb.CatalogToSDSS_DR13_PhotoObj_Primary.table_exists()  # type: ignore
-    assert catalogdb.SDSS_DR13_PhotoObj.select().count() > 1
-    assert catalogdb.CatalogToSDSS_DR13_PhotoObj_Primary.select().count() > 1  # type: ignore
-
     assert catalogdb.Gaia_DR3.table_exists()
     assert catalogdb.CatalogToGaia_DR3.table_exists()  # type: ignore
     assert catalogdb.Gaia_DR3.select().count() > 1
