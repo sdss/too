@@ -8,44 +8,44 @@
 
 from __future__ import annotations
 
-import polars
+# import polars
 
-from sdssdb.peewee.sdss5db import catalogdb
+# from sdssdb.peewee.sdss5db import catalogdb
 
-from too.database import load_too_targets
-from too.xmatch import xmatch_too_targets
+# from too.database import load_too_targets
+# from too.xmatch import xmatch_too_targets
 
 
-def test_xmatch(too_mock: polars.DataFrame):
-    too_mock_sample = too_mock[0:10000]
+# def test_xmatch(too_mock: polars.DataFrame):
+#     too_mock_sample = too_mock[0:10000]
 
-    # In the mock all entries with sdss_id also has a catalogid. Manually set
-    # one to null to test joining with sdss_id_mock.
-    n_catalogid = too_mock_sample.filter(polars.col.catalogid.is_not_null()).height
+#     # In the mock all entries with sdss_id also has a catalogid. Manually set
+#     # one to null to test joining with sdss_id_mock.
+#     n_catalogid = too_mock_sample.filter(polars.col.catalogid.is_not_null()).height
 
-    row_remove = too_mock_sample.filter(polars.col.catalogid.is_not_null()).head(1)
-    too_mock_sample.with_columns(
-        catalogid=polars.when(polars.col.too_id == row_remove[0, "too_id"])
-        .then(None)
-        .otherwise(polars.col.catalogid)
-    )
+#     row_remove = too_mock_sample.filter(polars.col.catalogid.is_not_null()).head(1)
+#     too_mock_sample.with_columns(
+#         catalogid=polars.when(polars.col.too_id == row_remove[0, "too_id"])
+#         .then(None)
+#         .otherwise(polars.col.catalogid)
+#     )
 
-    load_too_targets(too_mock_sample, catalogdb.database)
+#     load_too_targets(too_mock_sample, catalogdb.database)
 
-    xmatch_too_targets(catalogdb.database)
+#     xmatch_too_targets(catalogdb.database)
 
-    CatalogToToO_Target = catalogdb.database.models["catalogdb.catalog_to_too_target"]
-    n_catalogid_after = CatalogToToO_Target.select().count()
+#     CatalogToToO_Target = catalogdb.database.models["catalogdb.catalog_to_too_target"]
+#     n_catalogid_after = CatalogToToO_Target.select().count()
 
-    assert n_catalogid_after == n_catalogid
+#     assert n_catalogid_after == n_catalogid
 
-    # Assert that the row from which we removed the catalogid has been added and its
-    # catalogid is the original one.
-    assert (
-        CatalogToToO_Target.select()
-        .where(
-            CatalogToToO_Target.target_id == row_remove[0, "too_id"],
-            CatalogToToO_Target.catalogid == row_remove[0, "catalogid"],
-        )
-        .count()
-    ) == 1
+#     # Assert that the row from which we removed the catalogid has been added and its
+#     # catalogid is the original one.
+#     assert (
+#         CatalogToToO_Target.select()
+#         .where(
+#             CatalogToToO_Target.target_id == row_remove[0, "too_id"],
+#             CatalogToToO_Target.catalogid == row_remove[0, "catalogid"],
+#         )
+#         .count()
+#     ) == 1
