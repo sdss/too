@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import sdssdb
-
 from sdsstools import get_logger, get_package_version
 
 
@@ -31,3 +30,4 @@ __version__ = get_package_version(path=__file__, package_name=NAME)
 from .database import *
 from .datamodel import *
 from .mock import *
+from .xmatch import *
