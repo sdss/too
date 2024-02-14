@@ -205,6 +205,7 @@ def create_mock_too_catalogue(
         int(n_unknown * fraction_unknown_gaia),
     )
     gaia_unknown_targets = gaia_unknown_targets.with_columns(
+        gaia_dr3_source_id=None,
         catalogid=None,
         sdss_id=None,
         gaia_bp_mag=None,
