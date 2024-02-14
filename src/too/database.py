@@ -10,10 +10,9 @@ from __future__ import annotations
 
 import pathlib
 
-import peewee
 import polars
 
-from sdssdb.peewee import BaseModel
+from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too import log
@@ -21,52 +20,12 @@ from too.datamodel import mag_columns, too_dtypes
 from too.exceptions import ValidationError
 
 
-__all__ = ["ToO_Target"]
-
-
-class ToOBaseModel(BaseModel):
-    class Meta:
-        schema = "catalogdb"
-
-
-class ToO_Target(ToOBaseModel):
-    too_id = peewee.IntegerField(primary_key=True)
-    fiber_type = peewee.TextField()
-    catalogid = peewee.IntegerField()
-    sdss_id = peewee.IntegerField()
-    gaia_dr3_source_id = peewee.IntegerField()
-    twomass_pts_key = peewee.IntegerField()
-    sky_brightness_mode = peewee.TextField()
-    ra = peewee.FloatField()
-    dec = peewee.FloatField()
-    pmra = peewee.FloatField()
-    pmdec = peewee.FloatField()
-    epoch = peewee.FloatField()
-    parallax = peewee.FloatField()
-    lambda_eff = peewee.FloatField()
-    u_mag = peewee.FloatField()
-    g_mag = peewee.FloatField()
-    r_mag = peewee.FloatField()
-    i_mag = peewee.FloatField()
-    z_mag = peewee.FloatField()
-    optical_prov = peewee.TextField()
-    gaia_bp_mag = peewee.FloatField()
-    gaia_rp_mag = peewee.FloatField()
-    gaia_g_mag = peewee.FloatField()
-    h_mag = peewee.FloatField()
-    delta_ra = peewee.FloatField()
-    delta_dec = peewee.FloatField()
-    inertial = peewee.BooleanField()
-    n_exposures = peewee.IntegerField()
-    priority = peewee.IntegerField()
-    active = peewee.BooleanField()
-    expiration_date = peewee.IntegerField()
-    observed = peewee.BooleanField()
-
-    _meta: peewee.Metadata
-
-    class Meta:
-        table_name = "too_target"
+__all__ = [
+    "connect_to_database",
+    "get_database_uri",
+    "validate_too_targets",
+    "load_too_targets",
+]
 
 
 def connect_to_database(
@@ -78,11 +37,6 @@ def connect_to_database(
 ):
     """Connects the ``sdssdb`` ``sdss5db`` models to the database."""
 
-    # Add this before connecting so that when the models are reloaded
-    # the CatalogToToO_Target model is added automatically.
-    ToOBaseModel.bind(catalogdb.database)
-    catalogdb.database.models["catalogdb.too_target"] = ToO_Target
-
     catalogdb.database.connect(
         dbname,
         host=host,
@@ -93,6 +47,8 @@ def connect_to_database(
 
     if not catalogdb.database.connected:
         raise RuntimeError("Could not connect to the database.")
+
+    return catalogdb.database
 
 
 def get_database_uri(

@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import peewee
 import polars
+
 from sdssdb.connection import PeeweeDatabaseConnection
-from sdssdb.peewee.sdss5db.catalogdb import Version
+from sdssdb.peewee.sdss5db.catalogdb import ToO_Target, Version
+from target_selection.xmatch import XMatchPlanner
 
 from too import log
 from too.database import ToO_Target, get_database_uri
@@ -38,8 +40,8 @@ def xmatch_too_targets(
 
     assert database.connected, "Database is not connected"
 
-    too_target_schema: str = ToO_Target._meta.schema
-    too_target_table_name: str = ToO_Target._meta.table_name
+    too_target_schema: str = ToO_Target._meta.schema  # type:ignore
+    too_target_table_name: str = ToO_Target._meta.table_name  # type:ignore
     catalog_to_target_table_name: str = f"catalog_to_{too_target_table_name}"
 
     database_uri = get_database_uri(database.dbname, **database.connect_params)
