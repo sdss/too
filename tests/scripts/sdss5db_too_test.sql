@@ -1,5 +1,6 @@
 CREATE SCHEMA catalogdb;
 CREATE SCHEMA targetdb;
+CREATE SCHEMA sandbox;
 
 CREATE TABLE catalogdb.catalog (
     catalogid BIGINT,
@@ -57,43 +58,43 @@ CREATE TABLE catalogdb.twomass_psc (
     glon DOUBLE PRECISION
 );
 
-CREATE TABLE catalogdb.sdss_dr13_photoobj (
-    objid BIGINT,
-    ra DOUBLE PRECISION,
-    dec DOUBLE PRECISION,
-    psfmag_u REAL,
-    psfmag_g REAL,
-    psfmag_r REAL,
-    psfmag_i REAL,
-    psfmag_z REAL,
-    fibermag_u REAL,
-    fibermag_g REAL,
-    fibermag_r REAL,
-    fibermag_i REAL,
-    fibermag_z REAL,
-    fiber2mag_u REAL,
-    fiber2mag_g REAL,
-    fiber2mag_r REAL,
-    fiber2mag_i REAL,
-    fiber2mag_z REAL,
-    l DOUBLE PRECISION,
-    b DOUBLE PRECISION,
-    run SMALLINT,
-    rerun SMALLINT,
-    camcol SMALLINT,
-    field SMALLINT,
-    obj SMALLINT,
-    type SMALLINT,
-    flags BIGINT
-);
+-- CREATE TABLE catalogdb.sdss_dr13_photoobj (
+--     objid BIGINT,
+--     ra DOUBLE PRECISION,
+--     dec DOUBLE PRECISION,
+--     psfmag_u REAL,
+--     psfmag_g REAL,
+--     psfmag_r REAL,
+--     psfmag_i REAL,
+--     psfmag_z REAL,
+--     fibermag_u REAL,
+--     fibermag_g REAL,
+--     fibermag_r REAL,
+--     fibermag_i REAL,
+--     fibermag_z REAL,
+--     fiber2mag_u REAL,
+--     fiber2mag_g REAL,
+--     fiber2mag_r REAL,
+--     fiber2mag_i REAL,
+--     fiber2mag_z REAL,
+--     l DOUBLE PRECISION,
+--     b DOUBLE PRECISION,
+--     run SMALLINT,
+--     rerun SMALLINT,
+--     camcol SMALLINT,
+--     field SMALLINT,
+--     obj SMALLINT,
+--     type SMALLINT,
+--     flags BIGINT
+-- );
 
-CREATE TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary (
-    catalogid BIGINT,
-    target_id BIGINT,
-    version_id SMALLINT,
-    distance REAL,
-    best BOOLEAN
-);
+-- CREATE TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary (
+--     catalogid BIGINT,
+--     target_id BIGINT,
+--     version_id SMALLINT,
+--     distance REAL,
+--     best BOOLEAN
+-- );
 
 CREATE TABLE catalogdb.catalog_to_gaia_dr3_source (
     catalogid BIGINT,
@@ -151,7 +152,9 @@ CREATE TABLE catalogdb.catalog_to_too_target (
     target_id BIGINT,
     version_id SMALLINT,
     distance REAL,
-    best BOOLEAN
+    best BOOLEAN,
+    plan_id TEXT,
+    added_by_phase SMALLINT
 );
 
 CREATE TABLE targetdb.target (
@@ -228,28 +231,28 @@ CREATE TABLE targetdb.magnitude (
 \copy catalogdb.catalog FROM PROGRAM 'gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM 'gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM 'gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
-\copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM 'gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM 'gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_twomass_psc FROM PROGRAM 'gzip -dc catalog_to_twomass_psc.csv.gz' WITH CSV HEADER;
 \copy catalogdb.gaia_dr3_source FROM PROGRAM 'gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
-\copy catalogdb.sdss_dr13_photoobj FROM PROGRAM 'gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM 'gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
 \copy catalogdb.twomass_psc FROM PROGRAM 'gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
 
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
 ALTER TABLE catalogdb.catalog_to_gaia_dr3_source ADD PRIMARY KEY (catalogid, target_id, version_id);
-ALTER TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary ADD PRIMARY KEY (catalogid, target_id, version_id);
+-- ALTER TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary ADD PRIMARY KEY (catalogid, target_id, version_id);
 ALTER TABLE catalogdb.catalog_to_twomass_psc ADD PRIMARY KEY (catalogid, target_id, version_id);
-ALTER TABLE catalogdb.sdss_dr13_photoobj ADD PRIMARY KEY (objid);
+-- ALTER TABLE catalogdb.sdss_dr13_photoobj ADD PRIMARY KEY (objid);
 ALTER TABLE catalogdb.gaia_dr3_source ADD PRIMARY KEY (source_id);
 ALTER TABLE catalogdb.twomass_psc ADD PRIMARY KEY (pts_key);
 
-ALTER TABLE ONLY catalogdb.too_target
-    ADD CONSTRAINT gaia_dr3_source_id_fk
-    FOREIGN KEY (gaia_dr3_source_id) REFERENCES catalogdb.gaia_dr3_source(source_id);
+-- ALTER TABLE ONLY catalogdb.too_target
+--     ADD CONSTRAINT gaia_dr3_source_id_fk
+--     FOREIGN KEY (gaia_dr3_source_id) REFERENCES catalogdb.gaia_dr3_source(source_id);
 
-ALTER TABLE ONLY catalogdb.too_target
-    ADD CONSTRAINT twomass_pts_key_fk
-    FOREIGN KEY (twomass_pts_key) REFERENCES catalogdb.twomass_psc(pts_key);
+-- ALTER TABLE ONLY catalogdb.too_target
+--     ADD CONSTRAINT twomass_pts_key_fk
+--     FOREIGN KEY (twomass_pts_key) REFERENCES catalogdb.twomass_psc(pts_key);
 
 CREATE INDEX ON catalogdb.catalog (version_id);
 CREATE INDEX ON catalogdb.catalog (q3c_ang2ipix(ra, dec));
@@ -259,10 +262,10 @@ CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (target_id);
 CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (best);
 CREATE INDEX ON catalogdb.catalog_to_gaia_dr3_source (version_id);
 
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (catalogid);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (target_id);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (best);
-CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (version_id);
+-- CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (catalogid);
+-- CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (target_id);
+-- CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (best);
+-- CREATE INDEX ON catalogdb.catalog_to_sdss_dr13_photoobj_primary (version_id);
 
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (catalogid);
 CREATE INDEX ON catalogdb.catalog_to_twomass_psc (target_id);
@@ -276,7 +279,7 @@ CREATE INDEX ON catalogdb.catalog_to_too_target (version_id);
 
 CREATE INDEX ON catalogdb.gaia_dr3_source (q3c_ang2ipix(ra, dec));
 
-CREATE INDEX ON catalogdb.sdss_dr13_photoobj (q3c_ang2ipix(ra, dec));
+-- CREATE INDEX ON catalogdb.sdss_dr13_photoobj (q3c_ang2ipix(ra, dec));
 
 CREATE INDEX ON catalogdb.twomass_psc (q3c_ang2ipix(ra, decl));
 
@@ -298,9 +301,9 @@ INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;
 VACUUM ANALYZE catalogdb.catalog_to_gaia_dr3_source;
-VACUUM ANALYZE catalogdb.catalog_to_sdss_dr13_photoobj_primary;
+-- VACUUM ANALYZE catalogdb.catalog_to_sdss_dr13_photoobj_primary;
 VACUUM ANALYZE catalogdb.catalog_to_twomass_psc;
-VACUUM ANALYZE catalogdb.sdss_dr13_photoobj;
+-- VACUUM ANALYZE catalogdb.sdss_dr13_photoobj;
 VACUUM ANALYZE catalogdb.gaia_dr3_source;
 VACUUM ANALYZE catalogdb.twomass_psc;
 

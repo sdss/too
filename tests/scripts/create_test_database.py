@@ -72,13 +72,12 @@ def create_test_database(
     files = [
         "catalog.csv.gz",
         "sdss_id_stacked.csv.gz",
-        "catalog_to_sdss_dr13_photoobj_primary.csv.gz",
+        # "catalog_to_sdss_dr13_photoobj_primary.csv.gz",
         "catalog_to_gaia_dr3_source.csv.gz",
         "catalog_to_twomass_psc.csv.gz",
-        "sdss_dr13_photoobj.csv.gz",
+        # "sdss_dr13_photoobj.csv.gz",
         "gaia_dr3_source.csv.gz",
         "twomass_psc.csv.gz",
-        "sdss_id_stacked.csv.gz",
     ]
     for file in files:
         if not (CACHE_PATH / file).exists():
@@ -86,7 +85,7 @@ def create_test_database(
             log.info(f"File {file!r} not found in cache. Downloading from {url}")
             download_file(url, CACHE_PATH, transient_progress=True, console=console)
 
-    log.info("Proceeding with the population of the test database.")
+    log.info("Proceeding with the creation of the test database.")
     script_path = pathlib.Path(__file__).parent / "sdss5db_too_test.sql"
     subprocess.run(
         f"psql -d {DBNAME} -f {script_path!s}",
