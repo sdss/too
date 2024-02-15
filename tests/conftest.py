@@ -35,6 +35,13 @@ def connect_and_revert_database():
 
     connect_to_database(DBNAME)
     catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.catalog_to_too_target;")
+
+    yield
+
+    catalogdb.database.execute_sql(
+        "DROP TABLE IF EXISTS sandbox.catalog_62abc69fd3fad42d;"
+    )
 
 
 @pytest.fixture()
