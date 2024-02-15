@@ -2584,7 +2584,7 @@ docs = ["Sphinx (>=4.0.0)", "furo (>=2021.6.18-beta.36)", "myst-parser (>=0.15)"
 type = "git"
 url = "https://github.com/sdss/target_selection.git"
 reference = "too-xmatch"
-resolved_reference = "8de1845010aaff1d8340f457637b511ff510e4b8"
+resolved_reference = "3d4eba51b45ec83e5e9be5d4aca42817f7f93951"
 
 [[package]]
 name = "sdssdb"
