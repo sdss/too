@@ -82,6 +82,8 @@ TOO_XMATCH_CONFIG = {
 def xmatch_too_targets(
     database: PeeweeDatabaseConnection,
     version_plan: str | None = None,
+    load_catalog: bool = True,
+    keep_temp: bool = False,
 ):
     """Performs a cross-match of the ToO targets with the SDSS catalogues.
 
@@ -95,6 +97,24 @@ def xmatch_too_targets(
       catalogues and adds the matches to the ``catalog_to_too_target`` table.
       This is accomplished calling ``target_selection.XMatch`` in "addendum"
       mode.
+
+    Parameters
+    ----------
+    database
+        The database connection to use.
+    version_plan
+        The version plan to use. Defaults to the latest plan.
+    load_catalog
+        Whether to load the ``catalog`` table after the cross-match.
+    keep_temp
+        Whether to keep the temporary tables after the cross-match.
+
+    Returns
+    -------
+    model
+        The catalog model where the cross-match results are stored. If
+        ``load_catalog`` is ``False``, returns the model for the temporary
+        table.
 
     """
 
@@ -211,9 +231,39 @@ def xmatch_too_targets(
     # we always use run_id=9 for ToOs and we should have plenty of them (and if for
     # some reason we reached the catalogid of run_id=10 it would fail when appending
     # to catalog).
-    C2ToO = database.models[too_rel_fqtn]
-    max_catalogid = C2ToO.select(peewee.fn.MAX(C2ToO.catalogid)).scalar()
-    if max_catalogid:
-        xmatch_planner._max_cid = max_catalogid + 1
+    Catalog = database.models["catalogdb.catalog"]
 
-    xmatch_planner.run(load_catalog=False, keep_temp=True, force=True)
+    # Calculate the range of catalogids for run_id=TOO_RUN_ID.
+    min_cid_run = TOO_RUN_ID << (64 - 11)
+    max_cid_run = ((TOO_RUN_ID + 1) << (64 - 11)) - 1
+
+    # Get the max catalogid that is between those values.
+    max_cid = (
+        Catalog.select(peewee.fn.MAX(Catalog.catalogid))
+        .where(Catalog.catalogid >= min_cid_run, Catalog.catalogid <= max_cid_run)
+        .scalar()
+    )
+
+    # If the number exists (it will be None if are no targets for TOO_RUN_ID), set
+    # that value as the initial catalogid to assign to new targets.
+    if max_cid:
+        xmatch_planner._max_cid = max_cid + 1
+
+    # If we have a temporary catalog table, we also need to check its max catalogid
+    # as those won't have been added to the real catalog table yet.
+    temp_table = xmatch_planner._temp_table
+    if database.table_exists(temp_table, schema="sandbox"):
+        max_cid_temp = database.execute_sql(
+            f"SELECT MAX(catalogid) FROM sandbox.{temp_table};"
+        ).fetchone()[0]
+        if max_cid_temp is not None and max_cid_temp > xmatch_planner._max_cid:
+            xmatch_planner._max_cid = max_cid_temp + 1
+
+    xmatch_planner.run(load_catalog=load_catalog, keep_temp=keep_temp, force=True)
+
+    if load_catalog is False:
+        from target_selection.xmatch import TempCatalog
+
+        return TempCatalog
+    else:
+        return Catalog
