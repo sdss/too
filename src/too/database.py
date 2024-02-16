@@ -185,15 +185,23 @@ def load_too_targets(
     database_uri = get_database_uri(database.dbname, **database.connect_params)
 
     db_targets = polars.read_database_uri(
-        "SELECT too_id from catalogdb.too_target ORDER BY too_id",
+        "SELECT * from catalogdb.too_target ORDER BY too_id",
         database_uri,
         engine="adbc",
     )
-    db_targets = db_targets.cast(polars.Int64)
+
+    new_in_db = too_target_new.filter(polars.col.too_id.is_in(db_targets["too_id"]))
+    if not new_in_db.equals(db_targets):
+        log.warning(
+            "Some ToO targets may have changed values. These changes will be "
+            "ignored but should be reviewed."
+        )
 
     new_targets = too_target_new.filter(~polars.col.too_id.is_in(db_targets["too_id"]))
     if len(new_targets) == 0:
         log.info("No new ToO targets to add.")
+        if update_existing is False:
+            return polars.DataFrame(schema=too_dtypes)
     else:
         log.info(f"Loading {len(new_targets)} new ToO(s) into catalogdb.too_target.")
         new_targets.write_database(

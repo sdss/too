@@ -216,3 +216,20 @@ def test_update_too_targets(
     )
     assert len(db_metadata) == 2000
     assert db_metadata[10, "gaia_bp_mag"] == 100.0
+
+
+def test_update_too_targets_warning(
+    too_mock: polars.DataFrame,
+    caplog: pytest.LogCaptureFixture,
+):
+    load_too_targets(too_mock[0:1000], catalogdb.database)
+
+    too_mock[0, "catalogid"] = 1
+
+    result = load_too_targets(too_mock[0:1000], catalogdb.database)
+
+    assert result.height == 0
+
+    log_tuples = caplog.record_tuples
+    assert "Some ToO targets may have changed values." in log_tuples[-2][2]
+    assert "No new ToO targets to add." in log_tuples[-1][2]
