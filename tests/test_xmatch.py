@@ -75,8 +75,6 @@ def test_xmatch_3(too_mock: polars.DataFrame):
     too_mock_sample = too_mock[300000:400000]
     load_too_targets(too_mock_sample, catalogdb.database)
 
-    # This loads new targets to the real catalogdb.catalog and screws it up for
-    # further tests so this should be the last test that uses it.
     Model = xmatch_too_targets(catalogdb.database)
 
     assert Model is not None and Model == catalogdb.Catalog

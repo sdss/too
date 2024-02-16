@@ -11,6 +11,7 @@ from __future__ import annotations
 import random
 
 import numpy
+import peewee
 import polars
 import pytest
 
@@ -29,6 +30,14 @@ polars.set_random_seed(SEED)
 DBNAME: str = "sdss5db_too_test"
 
 
+@pytest.fixture(scope="session")
+def max_cid():
+    """Returns the maximum ``catalogid`` in the database."""
+
+    assert catalogdb.database.connected, "Database is not connected"
+    return catalogdb.Catalog.select(peewee.fn.MAX(catalogdb.Catalog.catalogid)).scalar()
+
+
 @pytest.fixture(autouse=True, scope="module")
 def connect_and_revert_database():
     """Reverts the database to the original state."""
@@ -45,11 +54,13 @@ def connect_and_revert_database():
 
 
 @pytest.fixture()
-def truncate_too_target():
+def truncate_too_target(max_cid: int):
     """Truncates ``too_target``."""
 
     assert catalogdb.database.connected, "Database is not connected"
     catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
+
+    catalogdb.Catalog.delete().where(catalogdb.Catalog.catalogid > max_cid).execute()
 
 
 @pytest.fixture(scope="session")
