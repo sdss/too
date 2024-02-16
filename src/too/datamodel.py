@@ -53,7 +53,7 @@ too_dtypes: PolarsTypeMapping = {
     "observed": polars.Boolean,
 }
 
-too_fixed_columns = [
+too_inmutable_columns = [
     "catalogid",
     "sdss_id",
     "gaia_dr3_source_id",

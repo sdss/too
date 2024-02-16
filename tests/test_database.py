@@ -16,6 +16,7 @@ from sdssdb.peewee.sdss5db import catalogdb
 
 from too.database import (
     connect_to_database,
+    database_uri_from_connection,
     get_database_uri,
     load_too_targets,
     validate_too_targets,
@@ -90,7 +91,7 @@ def test_get_database_uri_password_fails():
 
 
 def test_validate_too_target_passes(too_mock: polars.DataFrame):
-    assert validate_too_targets(too_mock)
+    assert isinstance(validate_too_targets(too_mock), polars.DataFrame)
 
 
 @pytest.mark.parametrize(
@@ -103,6 +104,7 @@ def test_validate_too_target_passes(too_mock: polars.DataFrame):
         ("n_exposures", "Null 'n_exposures' column values found"),
         ("active", "Null 'active' column values found"),
         ("mag_columns", "ToOs found with missing magnitudes"),
+        ("fiber_type", "Invalid fiber_type values."),
     ],
 )
 def test_validate_too_target_fails(
@@ -129,25 +131,30 @@ def test_validate_too_target_fails(
             gaia_g_mag=polars.lit(None, dtype=polars.Float32),
             h_mag=polars.lit(None, dtype=polars.Float32),
         )
+    elif test_mode == "fiber_type":
+        too_mock_test[0, "fiber_type"] = "INVALID"
 
     with pytest.raises(ValidationError, match=error_message):
         validate_too_targets(too_mock_test)
 
 
-def test_load_too_targets(too_mock: polars.DataFrame):
-    n_added = load_too_targets(too_mock[0:10], catalogdb.database)
+def test_load_too_targets(too_mock: polars.DataFrame, caplog: pytest.LogCaptureFixture):
+    added = load_too_targets(too_mock[0:10], catalogdb.database)
 
-    assert n_added == 10
+    assert added.height == 10
     assert catalogdb.ToO_Target.select().count() == 10
 
     # Repeat. No new targets should be added.
-    n_added = load_too_targets(too_mock[0:10], catalogdb.database)
-    assert n_added == 0
+    added = load_too_targets(too_mock[0:10], catalogdb.database)
+    assert added.height == 0
     assert catalogdb.ToO_Target.select().count() == 10
 
-    n_added = load_too_targets(too_mock[5:100000], catalogdb.database)
-    assert n_added == 99990
+    added = load_too_targets(too_mock[5:100000], catalogdb.database)
+    assert added.height == 99990
     assert catalogdb.ToO_Target.select().count() == 100000
+
+    log_tuples = caplog.record_tuples
+    assert log_tuples[-1][2] == "Running VACUUM ANALYZE on catalogdb.too_target"
 
 
 @pytest.mark.parametrize("extension", ["parquet", "csv", "json"])
@@ -171,7 +178,47 @@ def test_load_too_targets_from_file(
             load_too_targets("too_mock.json", catalogdb.database)
         return
 
-    n_added = load_too_targets(file, catalogdb.database)
+    added = load_too_targets(file, catalogdb.database)
 
-    assert n_added == 1000
-    assert catalogdb.ToO_Target.select().count() == n_added
+    assert added.height == 1000
+    assert catalogdb.ToO_Target.select().count() == added.height
+
+
+def test_update_too_targets(
+    too_mock: polars.DataFrame,
+    caplog: pytest.LogCaptureFixture,
+):
+    too_mock_sample = too_mock[0:1000]
+    load_too_targets(too_mock_sample, catalogdb.database)
+
+    database_uri = database_uri_from_connection(catalogdb.database)
+    db_targets = polars.read_database(
+        "SELECT * FROM catalogdb.too_target ORDER BY too_id",
+        database_uri,
+        engine="adbc",
+    )
+    assert db_targets[10, "gaia_bp_mag"] is None
+
+    # Modify a value in a row
+    too_mock_sample[10, "gaia_bp_mag"] = 100.0
+
+    # Update the targets
+    load_too_targets(too_mock_sample, catalogdb.database, update_existing=True)
+
+    assert caplog.record_tuples[-2][2] == "Updating 1 existing ToO target(s)."
+
+    db_targets = polars.read_database(
+        "SELECT * FROM catalogdb.too_target ORDER BY too_id",
+        database_uri,
+        engine="adbc",
+    )
+    assert db_targets[10, "gaia_bp_mag"] == 100.0
+
+
+def test_update_too_targets_fails(too_mock: polars.DataFrame):
+    too_mock_sample = too_mock[0:1000]
+    load_too_targets(too_mock_sample, catalogdb.database)
+
+    too_mock_sample[0, "catalogid"] = -999
+    with pytest.raises(ValidationError, match=".+Column 'catalogid' is inmutable"):
+        load_too_targets(too_mock_sample, catalogdb.database, update_existing=True)

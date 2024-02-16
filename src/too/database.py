@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import pathlib
 
+import numpy
 import polars
 
 from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too import log
-from too.datamodel import mag_columns, too_dtypes
+from too.datamodel import mag_columns, too_dtypes, too_inmutable_columns
 from too.exceptions import ValidationError
 
 
@@ -74,6 +75,12 @@ def get_database_uri(
     return f"postgresql://{auth}{host_port}/{dbname}"
 
 
+def database_uri_from_connection(database: PeeweeDatabaseConnection):
+    """Returns a database URI from a connection."""
+
+    return get_database_uri(database.dbname, **database.connect_params)
+
+
 def validate_too_targets(targets: polars.DataFrame):
     """Validates a list of ToO targets.
 
@@ -128,7 +135,24 @@ def validate_too_targets(targets: polars.DataFrame):
             "At least one magnitude value is required."
         )
 
-    return True
+    if set(targets["fiber_type"].unique()) != set(["APOGEE", "BOSS"]):
+        raise ValidationError(
+            "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."
+        )
+
+    # Fill some optional columns.
+    targets = targets.with_columns(
+        active=polars.col.active.fill_null(True),
+        inertial=polars.col.inertial.fill_null(False),
+        observed=polars.col.observed.fill_null(False),
+        optical_prov=polars.col.optical_prov.fill_null(""),
+        delta_ra=polars.col.delta_ra.fill_null(polars.lit(0, dtype=polars.Float32)),
+        delta_dec=polars.col.delta_dec.fill_null(polars.lit(0, dtype=polars.Float32)),
+        n_exposures=polars.col.n_exposures.fill_null(polars.lit(1, dtype=polars.Int16)),
+        priority=polars.col.priority.fill_null(polars.lit(5, dtype=polars.Int16)),
+    )
+
+    return targets
 
 
 def load_too_targets(
@@ -137,9 +161,6 @@ def load_too_targets(
     update_existing: bool = False,
 ):
     """Loads a list of ToO targets into the database."""
-
-    if update_existing:
-        raise NotImplementedError("update_existing not yet implemented.")
 
     assert database.connected, "Database is not connected."
 
@@ -153,30 +174,61 @@ def load_too_targets(
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
 
+    targets = targets.sort("too_id")
+    targets = validate_too_targets(targets)
+
     database_uri = get_database_uri(database.dbname, **database.connect_params)
 
-    current_targets = polars.read_database_uri(
-        "SELECT * from catalogdb.too_target",
+    db_targets = polars.read_database_uri(
+        "SELECT * from catalogdb.too_target ORDER BY too_id",
         database_uri,
         engine="adbc",
     )
-    current_targets = current_targets.cast(too_dtypes)  # type: ignore
+    db_targets = db_targets.cast(too_dtypes)  # type: ignore
 
-    new_targets = targets.filter(~polars.col.too_id.is_in(current_targets["too_id"]))
-
+    new_targets = targets.filter(~polars.col.too_id.is_in(db_targets["too_id"]))
     if len(new_targets) == 0:
         log.info("No new ToO targets to add.")
-        return 0
+    else:
+        log.info(f"Loading {len(new_targets)} new ToO(s) into catalogdb.too_target.")
+        new_targets.write_database(
+            "catalogdb.too_target",
+            database_uri,
+            if_table_exists="append",
+            engine="adbc",
+        )
 
-    log.info(f"Loading {len(new_targets)} new ToO targets into catalogdb.too_target.")
-    n_added = new_targets.write_database(
-        "catalogdb.too_target",
-        database_uri,
-        if_table_exists="append",
-        engine="adbc",
-    )
+    need_update = polars.DataFrame(schema=too_dtypes)
+    if update_existing:
+        # Update existing targets.
+        db_in_new = db_targets.join(targets, on="too_id", how="semi")
+        new_in_db = targets.join(db_targets, on="too_id", how="semi")
+
+        # We need to fill nulls with NaNs to compare the dataframes. Otherwise an
+        # elementwise comparison will return null when one of the elements is null.
+        targets_diff = db_in_new.fill_null(numpy.nan) != new_in_db.fill_null(numpy.nan)
+
+        need_update = new_in_db.filter(targets_diff.fold(lambda xx, yy: xx | yy))
+        if len(need_update) > 0:
+            for col in targets_diff.columns:
+                if targets_diff[col].any():
+                    if col in too_inmutable_columns:
+                        raise ValidationError(
+                            f"Found changes in column {col!r} for existing targets. "
+                            f"Column {col!r} is inmutable."
+                        )
+
+            log.info(f"Updating {len(need_update)} existing ToO target(s).")
+            new_in_db.write_database(
+                "catalogdb.too_target",
+                database_uri,
+                if_table_exists="replace",
+                engine="adbc",
+            )
+        else:
+            log.debug("No ToO targets to update.")
 
     log.debug("Running VACUUM ANALYZE on catalogdb.too_target")
     database.execute_sql("VACUUM ANALYZE catalogdb.too_target;")
 
-    return n_added
+    return polars.concat([new_targets, need_update], how="vertical_relaxed")
