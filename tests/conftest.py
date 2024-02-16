@@ -34,16 +34,19 @@ DBNAME: str = "sdss5db_too_test"
 def max_cid():
     """Returns the maximum ``catalogid`` in the database."""
 
+    connect_to_database(DBNAME)
     assert catalogdb.database.connected, "Database is not connected"
-    return catalogdb.Catalog.select(peewee.fn.MAX(catalogdb.Catalog.catalogid)).scalar()
+
+    yield catalogdb.Catalog.select(peewee.fn.MAX(catalogdb.Catalog.catalogid)).scalar()
 
 
 @pytest.fixture(autouse=True, scope="module")
-def connect_and_revert_database():
+def connect_and_revert_database(max_cid: int):
     """Reverts the database to the original state."""
 
     connect_to_database(DBNAME)
-    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target CASCADE;")
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_metadata;")
     catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.catalog_to_too_target;")
 
     yield
@@ -51,16 +54,18 @@ def connect_and_revert_database():
     catalogdb.database.execute_sql(
         "DROP TABLE IF EXISTS sandbox.catalog_62abc69fd3fad42d;"
     )
+    catalogdb.database.execute_sql(
+        f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};"
+    )
 
 
 @pytest.fixture()
-def truncate_too_target(max_cid: int):
+def truncate_too_target():
     """Truncates ``too_target``."""
 
     assert catalogdb.database.connected, "Database is not connected"
-    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target;")
-
-    catalogdb.Catalog.delete().where(catalogdb.Catalog.catalogid > max_cid).execute()
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target CASCADE;")
+    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_metadata;")
 
 
 @pytest.fixture(scope="session")

@@ -188,37 +188,31 @@ def test_update_too_targets(
     too_mock: polars.DataFrame,
     caplog: pytest.LogCaptureFixture,
 ):
+    load_too_targets(too_mock[0:2000], catalogdb.database)
+
     too_mock_sample = too_mock[0:1000]
-    load_too_targets(too_mock_sample, catalogdb.database)
 
     database_uri = database_uri_from_connection(catalogdb.database)
-    db_targets = polars.read_database(
-        "SELECT * FROM catalogdb.too_target ORDER BY too_id",
+    db_metadata = polars.read_database(
+        "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
         database_uri,
         engine="adbc",
     )
-    assert db_targets[10, "gaia_bp_mag"] is None
+    assert len(db_metadata) == 2000
+    assert db_metadata[10, "gaia_bp_mag"] is None
 
     # Modify a value in a row
     too_mock_sample[10, "gaia_bp_mag"] = 100.0
 
-    # Update the targets
+    # Update the metadata
     load_too_targets(too_mock_sample, catalogdb.database, update_existing=True)
 
-    assert caplog.record_tuples[-2][2] == "Updating 1 existing ToO target(s)."
+    assert "Updating ToO entries" in caplog.record_tuples[-2][2]
 
-    db_targets = polars.read_database(
-        "SELECT * FROM catalogdb.too_target ORDER BY too_id",
+    db_metadata = polars.read_database(
+        "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
         database_uri,
         engine="adbc",
     )
-    assert db_targets[10, "gaia_bp_mag"] == 100.0
-
-
-def test_update_too_targets_fails(too_mock: polars.DataFrame):
-    too_mock_sample = too_mock[0:1000]
-    load_too_targets(too_mock_sample, catalogdb.database)
-
-    too_mock_sample[0, "catalogid"] = -999
-    with pytest.raises(ValidationError, match=".+Column 'catalogid' is inmutable"):
-        load_too_targets(too_mock_sample, catalogdb.database, update_existing=True)
+    assert len(db_metadata) == 2000
+    assert db_metadata[10, "gaia_bp_mag"] == 100.0

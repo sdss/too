@@ -119,13 +119,17 @@ CREATE TABLE catalogdb.too_target (
     sdss_id BIGINT,
     gaia_dr3_source_id BIGINT,
     twomass_pts_key INTEGER,
-    sky_brightness_mode TEXT,
     ra DOUBLE PRECISION,
     dec DOUBLE PRECISION,
     pmra REAL,
     pmdec REAL,
     epoch REAL,
-    parallax REAL,
+    parallax REAL
+);
+
+CREATE TABLE catalogdb.too_metadata (
+    too_id BIGINT PRIMARY KEY REFERENCES catalogdb.too_target(too_id),
+    sky_brightness_mode TEXT,
     lambda_eff REAL,
     u_mag REAL,
     g_mag REAL,

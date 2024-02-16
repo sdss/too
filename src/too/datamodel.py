@@ -53,13 +53,30 @@ too_dtypes: PolarsTypeMapping = {
     "observed": polars.Boolean,
 }
 
-too_inmutable_columns = [
-    "catalogid",
-    "sdss_id",
-    "gaia_dr3_source_id",
-    "twomass_pts_key",
-    "fiber_type",
+too_metadata_columns = [
+    "too_id",
+    "sky_brightness_mode",
+    "lambda_eff",
+    "u_mag",
+    "g_mag",
+    "r_mag",
+    "i_mag",
+    "z_mag",
+    "optical_prov",
+    "gaia_bp_mag",
+    "gaia_rp_mag",
+    "gaia_g_mag",
+    "h_mag",
+    "delta_ra",
+    "delta_dec",
+    "inertial",
+    "n_exposures",
+    "priority",
+    "active",
+    "expiration_date",
+    "observed",
 ]
+
 mag_columns = [
     "u_mag",
     "g_mag",

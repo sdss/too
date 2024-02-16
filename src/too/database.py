@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import pathlib
 
-import numpy
 import polars
 
 from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db import catalogdb
 
 from too import log
-from too.datamodel import mag_columns, too_dtypes, too_inmutable_columns
+from too.datamodel import mag_columns, too_dtypes, too_metadata_columns
 from too.exceptions import ValidationError
 
 
@@ -177,16 +176,22 @@ def load_too_targets(
     targets = targets.sort("too_id")
     targets = validate_too_targets(targets)
 
+    too_columns = ["too_id"]
+    too_columns += [col for col in too_dtypes if col not in too_metadata_columns]
+
+    too_target_new = targets.select(too_columns)
+    too_metadata_new = targets.select(too_metadata_columns)
+
     database_uri = get_database_uri(database.dbname, **database.connect_params)
 
     db_targets = polars.read_database_uri(
-        "SELECT * from catalogdb.too_target ORDER BY too_id",
+        "SELECT too_id from catalogdb.too_target ORDER BY too_id",
         database_uri,
         engine="adbc",
     )
-    db_targets = db_targets.cast(too_dtypes)  # type: ignore
+    db_targets = db_targets.cast(polars.Int64)
 
-    new_targets = targets.filter(~polars.col.too_id.is_in(db_targets["too_id"]))
+    new_targets = too_target_new.filter(~polars.col.too_id.is_in(db_targets["too_id"]))
     if len(new_targets) == 0:
         log.info("No new ToO targets to add.")
     else:
@@ -198,37 +203,49 @@ def load_too_targets(
             engine="adbc",
         )
 
-    need_update = polars.DataFrame(schema=too_dtypes)
-    if update_existing:
-        # Update existing targets.
-        db_in_new = db_targets.join(targets, on="too_id", how="semi")
-        new_in_db = targets.join(db_targets, on="too_id", how="semi")
-
-        # We need to fill nulls with NaNs to compare the dataframes. Otherwise an
-        # elementwise comparison will return null when one of the elements is null.
-        targets_diff = db_in_new.fill_null(numpy.nan) != new_in_db.fill_null(numpy.nan)
-
-        need_update = new_in_db.filter(targets_diff.fold(lambda xx, yy: xx | yy))
-        if len(need_update) > 0:
-            for col in targets_diff.columns:
-                if targets_diff[col].any():
-                    if col in too_inmutable_columns:
-                        raise ValidationError(
-                            f"Found changes in column {col!r} for existing targets. "
-                            f"Column {col!r} is inmutable."
-                        )
-
-            log.info(f"Updating {len(need_update)} existing ToO target(s).")
-            new_in_db.write_database(
-                "catalogdb.too_target",
-                database_uri,
-                if_table_exists="replace",
-                engine="adbc",
+        if not update_existing:
+            too_metadata_new = too_metadata_new.filter(
+                polars.col.too_id.is_in(new_targets["too_id"])
             )
-        else:
-            log.debug("No ToO targets to update.")
+            update_existing = True
+
+    if update_existing:
+        log.info("Updating ToO entries in catalogdb.too_metadata.")
+
+        # First get the current metadata.
+        too_metadata = polars.read_database(
+            "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
+            database_uri,
+            engine="adbc",
+        )
+
+        # Update the metadata dataframe.
+        too_metadata = too_metadata.update(
+            too_metadata_new,
+            on="too_id",
+            how="outer",
+            include_nulls=True,
+        )
+
+        # Replace the table (this is faster than atomic updates).
+        too_metadata.write_database(
+            "catalogdb.too_metadata",
+            database_uri,
+            if_table_exists="replace",
+            engine="adbc",
+        )
+
+        # Recreate PK nand FK constraints.
+        database.execute_sql(
+            "ALTER TABLE catalogdb.too_metadata ADD PRIMARY KEY (too_id);"
+        )
+        database.execute_sql(
+            "ALTER TABLE catalogdb.too_metadata ADD FOREIGN KEY (too_id) "
+            "REFERENCES catalogdb.too_target (too_id) ON DELETE CASCADE;"
+        )
 
     log.debug("Running VACUUM ANALYZE on catalogdb.too_target")
     database.execute_sql("VACUUM ANALYZE catalogdb.too_target;")
+    database.execute_sql("VACUUM ANALYZE catalogdb.too_metadata;")
 
-    return polars.concat([new_targets, need_update], how="vertical_relaxed")
+    return new_targets
