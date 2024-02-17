@@ -232,6 +232,21 @@ CREATE TABLE targetdb.magnitude (
     optical_prov TEXT
 );
 
+CREATE TABLE targetdb.cadence (
+    label TEXT NOT NULL,
+    nepochs INTEGER,
+    delta DOUBLE PRECISION[],
+    skybrightness REAL[],
+    delta_max REAL[],
+    delta_min REAL[],
+    nexp INTEGER[],
+    max_length REAL[],
+    pk BIGINT PRIMARY KEY,
+    obsmode_pk TEXT[],
+    label_root TEXT,
+    label_version TEXT DEFAULT ''::TEXT
+);
+
 \copy catalogdb.catalog FROM PROGRAM 'gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM 'gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM 'gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
@@ -299,8 +314,14 @@ CREATE INDEX ON targetdb.carton_to_target (target_pk);
 CREATE INDEX ON targetdb.magnitude (carton_to_target_pk);
 CREATE INDEX ON targetdb.carton (version_pk);
 
-INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
+CREATE UNIQUE INDEX ON targetdb.cadence(pk int8_ops);
+CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
+CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
+CREATE INDEX ON targetdb.cadence(nepochs int4_ops);
+
 INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
+INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}', '{1}', '{0}', 1, null, 'bright_1x1');
+INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
 
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;

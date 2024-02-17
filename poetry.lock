@@ -1908,17 +1908,17 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polars"
-version = "0.20.8"
+version = "0.20.9"
 description = "Blazingly fast DataFrame library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "polars-0.20.8-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:73f1d369aeddda5f11411b6497f697f2471bbe6ae55fd936677a10a40995c83c"},
-    {file = "polars-0.20.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:dc3a446fe606095b3ad6df3cf3dddd8ad54be7745f255fedb29f8bdf71a60760"},
-    {file = "polars-0.20.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d3d58ebc7a24d26930535d06b8772e125038a87a6abab4c5dfd87ea19bba61f3"},
-    {file = "polars-0.20.8-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:5b733816ac61156c12bd0edd6d7c1a5e63859830ce0e425b6450b335024f0cd5"},
-    {file = "polars-0.20.8-cp38-abi3-win_amd64.whl", hash = "sha256:2300f48ff7120eefe2cac2113990d0b0b5beedad93266b9fedfc8df133e7b13b"},
-    {file = "polars-0.20.8.tar.gz", hash = "sha256:a34f6ce1c5469872b291aaf90467e632e81f92dec6c2e18136bc40cd92877411"},
+    {file = "polars-0.20.9-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:fac0cac8fc734a434990f78ff1f21fa3ddcd00965c6b6c39996e189d406e3f19"},
+    {file = "polars-0.20.9-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:bdeeb77738a6a5e92c27ff791c12fb51896be5949a25c82023ce066010b50c2a"},
+    {file = "polars-0.20.9-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:88112c329b4aaaead05df8758b433b243d6aab99c1f3b1e75c1f22ba4b13f47d"},
+    {file = "polars-0.20.9-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:a382b59095691b482ae64ba3a66e982778d98e916b929e31a4aad4ad9304486f"},
+    {file = "polars-0.20.9-cp38-abi3-win_amd64.whl", hash = "sha256:298a942b61eb71110c36961682562c69996ec6c22c538f77e96a19c54f9e3461"},
+    {file = "polars-0.20.9.tar.gz", hash = "sha256:6633b94a21cec728e6079cc400822731f6702f4dc599b37657dcdb6178c3788d"},
 ]
 
 [package.extras]
@@ -2282,13 +2282,13 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "8.0.0"
+version = "8.0.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6"},
-    {file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c"},
+    {file = "pytest-8.0.1-py3-none-any.whl", hash = "sha256:3e4f16fe1c0a9dc9d9389161c127c3edc5d810c38d6793042fb81d9f48a59fca"},
+    {file = "pytest-8.0.1.tar.gz", hash = "sha256:267f6563751877d772019b13aacbe4e860d73fe8f651f28112e9ac37de7513ae"},
 ]
 
 [package.dependencies]
@@ -2584,7 +2584,7 @@ docs = ["Sphinx (>=4.0.0)", "furo (>=2021.6.18-beta.36)", "myst-parser (>=0.15)"
 type = "git"
 url = "https://github.com/sdss/target_selection.git"
 reference = "too-xmatch"
-resolved_reference = "3d4eba51b45ec83e5e9be5d4aca42817f7f93951"
+resolved_reference = "405fc2da2570fdfd27053d6bc291891c15aac599"
 
 [[package]]
 name = "sdssdb"
@@ -2616,7 +2616,7 @@ docs = ["Sphinx (>=7.0.0)", "releases (>=2.0.0)", "sphinx_bootstrap_theme (>=0.4
 type = "git"
 url = "https://github.com/sdss/sdssdb.git"
 reference = "albireox/too_target"
-resolved_reference = "933db78c20e1de14cc226d14f990ff051af7e8d0"
+resolved_reference = "737456741c5d0e95e7b78df0f66eba2c286c3b76"
 
 [[package]]
 name = "sdsstools"

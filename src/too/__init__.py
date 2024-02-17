@@ -8,9 +8,16 @@
 
 from __future__ import annotations
 
+import warnings
+
 import sdssdb
 from sdsstools import get_logger, get_package_version
+from target_selection import log as ts_log
+from target_selection.exceptions import TargetSelectionImportWarning
 
+
+ts_log.setLevel(10000)  # Disable target_selection logging
+warnings.simplefilter("ignore", TargetSelectionImportWarning)
 
 sdssdb.autoconnect = False
 
@@ -27,6 +34,7 @@ assert console is not None
 __version__ = get_package_version(path=__file__, package_name=NAME)
 
 
+from .carton import *
 from .database import *
 from .datamodel import *
 from .mock import *
