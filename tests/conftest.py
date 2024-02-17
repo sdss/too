@@ -44,19 +44,23 @@ def max_cid():
 def connect_and_revert_database(max_cid: int):
     """Reverts the database to the original state."""
 
+    execute_sql = catalogdb.database.execute_sql
+
     connect_to_database(DBNAME)
-    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_target CASCADE;")
-    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.too_metadata;")
-    catalogdb.database.execute_sql("TRUNCATE TABLE catalogdb.catalog_to_too_target;")
+
+    execute_sql("TRUNCATE TABLE catalogdb.too_target CASCADE;")
+    execute_sql("TRUNCATE TABLE catalogdb.too_metadata;")
+    execute_sql("TRUNCATE TABLE catalogdb.catalog_to_too_target;")
+
+    execute_sql("TRUNCATE TABLE targetdb.target;")
+    execute_sql("TRUNCATE TABLE targetdb.carton_to_target;")
+    execute_sql("TRUNCATE TABLE targetdb.carton;")
+    execute_sql("TRUNCATE TABLE targetdb.magnitude;")
 
     yield
 
-    catalogdb.database.execute_sql(
-        "DROP TABLE IF EXISTS sandbox.catalog_62abc69fd3fad42d;"
-    )
-    catalogdb.database.execute_sql(
-        f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};"
-    )
+    execute_sql("DROP TABLE IF EXISTS sandbox.catalog_62abc69fd3fad42d;")
+    execute_sql(f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};")
 
 
 @pytest.fixture()

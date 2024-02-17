@@ -2584,7 +2584,7 @@ docs = ["Sphinx (>=4.0.0)", "furo (>=2021.6.18-beta.36)", "myst-parser (>=0.15)"
 type = "git"
 url = "https://github.com/sdss/target_selection.git"
 reference = "too-xmatch"
-resolved_reference = "405fc2da2570fdfd27053d6bc291891c15aac599"
+resolved_reference = "0d5d2164c8b29d7ed9431f8cb5f3f12b8047dc64"
 
 [[package]]
 name = "sdssdb"
@@ -2616,7 +2616,7 @@ docs = ["Sphinx (>=7.0.0)", "releases (>=2.0.0)", "sphinx_bootstrap_theme (>=0.4
 type = "git"
 url = "https://github.com/sdss/sdssdb.git"
 reference = "albireox/too_target"
-resolved_reference = "737456741c5d0e95e7b78df0f66eba2c286c3b76"
+resolved_reference = "cf51611013928a616d47bae71c30c9532618b55e"
 
 [[package]]
 name = "sdsstools"

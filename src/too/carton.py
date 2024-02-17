@@ -20,7 +20,7 @@ TOO_TARGET_PLAN = "1.1.0"
 def run_too_carton():
     """Runs the ToO carton."""
 
-    from target_selection.cartons.too import ToO_Carton
+    from target_selection.cartons.too import ToO_Carton  # Slow import
 
     log.info("Running the ToO carton.")
     too_carton = ToO_Carton(TOO_TARGET_PLAN)
