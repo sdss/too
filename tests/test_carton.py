@@ -39,8 +39,6 @@ def test_run_carton_1():
 def test_run_carton_2(too_mock: polars.DataFrame):
     sample = too_mock[10000:20000]
 
-    targetdb.database.connect()
-
     load_too_targets(sample, targetdb.database)
     xmatch_too_targets(targetdb.database)
 
