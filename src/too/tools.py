@@ -15,7 +15,10 @@ import tempfile
 from typing import TYPE_CHECKING
 
 import httpx
+import polars
 import rich.progress
+
+from too.datamodel import too_dtypes
 
 
 if TYPE_CHECKING:
@@ -24,7 +27,27 @@ if TYPE_CHECKING:
     import rich.console
 
 
-__all__ = ["download_file"]
+__all__ = ["download_file", "read_too_file"]
+
+
+def read_too_file(path: polars.DataFrame | pathlib.Path | str) -> polars.DataFrame:
+    """Reads a ToO file in CSV or parquet format."""
+
+    if isinstance(path, (str, pathlib.Path)):
+        path = pathlib.Path(path)
+
+        if path.suffix == ".parquet":
+            targets = polars.read_parquet(path)
+        elif path.suffix == ".csv":
+            targets = polars.read_csv(path, schema=too_dtypes)
+        else:
+            raise ValueError(f"Invalid file type {path.suffix!r}")
+
+    else:
+        targets = path
+
+    targets = targets.sort("too_id")
+    return targets
 
 
 def download_file(

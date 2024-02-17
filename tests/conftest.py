@@ -21,13 +21,8 @@ from too.database import connect_to_database
 from too.mock import create_mock_too_catalogue
 
 
-SEED: int = 42
-random.seed(SEED)
-numpy.random.seed(SEED)
-polars.set_random_seed(SEED)
-
-
 DBNAME: str = "sdss5db_too_test"
+SEED: int = 42
 
 
 @pytest.fixture(scope="session")
@@ -74,6 +69,11 @@ def truncate_too_target():
 
 @pytest.fixture(scope="session")
 def too_mock():
+
+    random.seed(SEED)
+    numpy.random.seed(SEED)
+    polars.set_random_seed(SEED)
+
     sample = create_mock_too_catalogue()
 
     yield sample

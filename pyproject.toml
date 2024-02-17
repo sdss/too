@@ -13,6 +13,7 @@ packages = [
     { include = "too", from = "src" }
 ]
 include = []
+scripts = { "too" = "too.__main__:too_cli" }
 
 [tool.poetry.dependencies]
 python = "^3.12,<4.0"
@@ -24,6 +25,7 @@ httpx = "^0.26.0"
 rich = "^13.7.0"
 sdssdb = { git = "https://github.com/sdss/sdssdb.git", branch = "albireox/too_target" }
 pyarrow = "^15.0.0"
+click-option-group = "^0.5.6"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.21.0"

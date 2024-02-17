@@ -18,6 +18,7 @@ from sdssdb.peewee.sdss5db import catalogdb
 from too import log
 from too.datamodel import mag_columns, too_dtypes, too_metadata_columns
 from too.exceptions import ValidationError
+from too.tools import read_too_file
 
 
 __all__ = [
@@ -163,17 +164,7 @@ def load_too_targets(
 
     assert database.connected, "Database is not connected."
 
-    if isinstance(targets, (str, pathlib.Path)):
-        path = pathlib.Path(targets)
-
-        if path.suffix == ".parquet":
-            targets = polars.read_parquet(targets)
-        elif path.suffix == ".csv":
-            targets = polars.read_csv(targets, schema=too_dtypes)
-        else:
-            raise ValueError(f"Invalid file type {path.suffix!r}")
-
-    targets = targets.sort("too_id")
+    targets = read_too_file(targets)
     targets = validate_too_targets(targets)
 
     too_columns = ["too_id"]

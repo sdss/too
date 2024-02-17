@@ -22,7 +22,6 @@ def run_too_carton():
 
     from target_selection.cartons.too import ToO_Carton  # Slow import
 
-    log.info("Running the ToO carton.")
     too_carton = ToO_Carton(TOO_TARGET_PLAN)
     too_carton.log = log
 

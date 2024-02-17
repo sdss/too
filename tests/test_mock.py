@@ -13,6 +13,7 @@ import polars
 
 def test_mock_sample(too_mock: polars.DataFrame):
     assert isinstance(too_mock, polars.DataFrame)
+    print(too_mock)
     assert too_mock.height > 500000
 
     # Check reproducibility of random numbers.
