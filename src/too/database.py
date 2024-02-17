@@ -69,7 +69,7 @@ def get_database_uri(
     else:
         raise ValueError("Passing a password requires also passing a user.")
 
-    host_port: str = f"{host}" if port is None else f"{host}:{port}"
+    host_port: str = f"{host or ''}" if port is None else f"{host or ''}:{port}"
 
     return f"postgresql://{auth}{host_port}/{dbname}"
 
