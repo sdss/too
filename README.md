@@ -15,7 +15,11 @@ This package deals with all the aspects of loading and processing targets of opp
 
 - Reads one or multiple ToO input files.
 - Loads new targets into `catalogdb.too_target` and updates the metadata of existing targets in `catalogdb.too_metadata`.
-- Cross-matches the new targets, assigning `catalogids` to new
+- Cross-matches the new targets, assigning `catalogids` to new targets and populating the `catalogdb.catalog_to_too_target` table.
+- Assigns new `sdss_id` to the new `catalogid` entries. (Potentially. TBD.)
+- Runs the `too` carton and updates `targetdb.target`, `targetdb.carton_to_target`, and `targetdb.magnitude` for new ToOs.
+- Performs target validation. (TBD)
+- Generates a text file of active ToOs that can be synced to the observatories and is used by [jaeger](https://github.com/sdss/jaeger) to replace targets on the fly when creating new configurations.
 
 ## Datamodel
 
