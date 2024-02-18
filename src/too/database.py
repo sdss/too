@@ -135,6 +135,19 @@ def validate_too_targets(targets: polars.DataFrame):
             "At least one magnitude value is required."
         )
 
+    # Check that if one of the Sloan magnitudes is set, all are set.
+    sloan_mags = targets.select(polars.col("^[ugriz]_mag$"))
+    # Rows where at least one value is not null.
+    sloan_mags_not_null = sloan_mags.filter(
+        polars.fold(False, lambda a, b: a | b.is_not_null(), polars.all())
+    )
+    # Rows where at least one value is null.
+    sloan_mags_null = sloan_mags_not_null.filter(
+        polars.fold(False, lambda a, b: a | b.is_null(), polars.all())
+    )
+    if sloan_mags_null.height > 0:
+        raise ValidationError("Found rows with incomplete Sloan magnitudes.")
+
     if set(targets["fiber_type"].unique()) != set(["APOGEE", "BOSS"]):
         raise ValidationError(
             "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."

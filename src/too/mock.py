@@ -217,7 +217,6 @@ def create_mock_too_catalogue(
         int(n_unknown * fraction_unknown_sdss),
     )
     sdss_unknown_targets = sdss_unknown_targets.with_columns(
-        polars.col(r"^[ugiz]_mag$").replace({}, default=None),
         catalogid=None,
         sdss_id=None,
     )
@@ -248,7 +247,11 @@ def create_mock_too_catalogue(
             "ra": numpy.random.uniform(0, 360, n_random),
             "dec": numpy.random.uniform(-90, 90, n_random),
             "gaia_g_mag": polars.Series(random_gaia, dtype=polars.Float32),
+            "u_mag": polars.Series(random_sdss, dtype=polars.Float32),
+            "g_mag": polars.Series(random_sdss, dtype=polars.Float32),
             "r_mag": polars.Series(random_sdss, dtype=polars.Float32),
+            "i_mag": polars.Series(random_sdss, dtype=polars.Float32),
+            "z_mag": polars.Series(random_sdss, dtype=polars.Float32),
         },
     )
 

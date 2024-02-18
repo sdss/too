@@ -105,6 +105,7 @@ def test_validate_too_target_passes(too_mock: polars.DataFrame):
         ("active", "Null 'active' column values found"),
         ("mag_columns", "ToOs found with missing magnitudes"),
         ("fiber_type", "Invalid fiber_type values."),
+        ("sloan_mags", "Found rows with incomplete Sloan magnitudes."),
     ],
 )
 def test_validate_too_target_fails(
@@ -133,6 +134,10 @@ def test_validate_too_target_fails(
         )
     elif test_mode == "fiber_type":
         too_mock_test[0, "fiber_type"] = "INVALID"
+    elif test_mode == "sloan_mags":
+        too_mock_test = too_mock_test.with_columns(
+            u_mag=polars.lit(None, dtype=polars.Float32)
+        )
 
     with pytest.raises(ValidationError, match=error_message):
         validate_too_targets(too_mock_test)
