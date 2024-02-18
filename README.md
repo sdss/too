@@ -19,7 +19,7 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | fiber_type          | string  | Type of fiber to be used to observe the target [required].                                             |
 | catalogid           | int64   | catalogid for this target.                                                                             |
 | sdss_id             | int64   | sdss_id for this target.                                                                               |
-| gaia_dr3_source_id  | int64   | Unique identifier of the target in the Gaia DR3 catalog (`source_id` columns).                         |
+| gaia_dr3_source_id  | int64   | Unique identifier of the target in the Gaia DR3 catalog (`source_id` column).                         |
 | twomass_pts_key     | int32   | Unique identifier of the target in the 2MASS catalog (`pts_key` column).                               |
 | sky_brightness_mode | string  | The sky brightness mode. Either `bright` or `dark`.                                                    |
 | ra                  | float64 | The Right Ascension of the target in ICRS coordinates as decimal degrees [required].                   |
