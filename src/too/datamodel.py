@@ -81,15 +81,15 @@ too_metadata_columns = [
 ]
 
 column_descriptions = {
-    "too_id": "Unique identifier for the ToO target [required].",
-    "fiber_type": "Type of fiber to be used to observe the target [required].",
+    "too_id": "Unique identifier for the ToO target. [required]",
+    "fiber_type": "Type of fiber to be used to observe the target. [required.",
     "catalogid": "catalogid for this target.",
     "sdss_id": "sdss_id for this target.",
-    "gaia_dr3_source_id": "Unique identifier of the target in the Gaia DR3 catalog (`source_id` columns).",
+    "gaia_dr3_source_id": "Unique identifier of the target in the Gaia DR3 catalog (`source_id` column).",
     "twomass_pts_key": "Unique identifier of the target in the 2MASS catalog (`pts_key` column).",
     "sky_brightness_mode": "The sky brightness mode. Either `bright` or `dark`.",
-    "ra": "The Right Ascension of the target in ICRS coordinates as decimal degrees [required].",
-    "dec": "The declination of the target in ICRS coordinates as decimal degrees [required].",
+    "ra": "The Right Ascension of the target in ICRS coordinates as decimal degrees. [required]",
+    "dec": "The declination of the target in ICRS coordinates as decimal degrees. [required]",
     "pmra": "The proper motion in RA in mas/yr as a true angle (the cos(dec) factor must have been applied).",
     "pmdec": "The proper motion in Dec in mas/yr as a true angle.",
     "epoch": "The epoch of the ra/dec coordinates. Required but only relevant if pmra/pmdec are defined.",
@@ -107,11 +107,11 @@ column_descriptions = {
     "h_mag": "H-band magnitude of the target.",
     "delta_ra": "Fixed RA offset as a true angle, in arcsec.",
     "delta_dec": "Fixed Dec offset, in arcsec.",
-    "inertial": " if not offset correction should be applied based on target magnitude. 0 otherwise.",
-    "n_exposures": "The minimum number of exposures required for the ToO to be complete and not assigned anymore.",
-    "active": "1 if the target is active and should be assigned to configurations if possible.",
+    "inertial": "`true` if not offset correction should be applied based on target magnitude. `false` otherwise.",
+    "n_exposures": "The minimum number of exposures required for the ToO to be complete and not assigned anymore. [required]",
+    "active": "`true` if the target is active and should be assigned to configurations if possible. [required]",
     "expiration_date": "MJD at which the target should automatically be consider inactive. If empty, the target never expires.",
-    "observed": "1 if the target has been fully observed and should not be assigned again.",
+    "observed": "`true` if the target has been fully observed and should not be assigned again. [required]",
 }
 
 mag_columns = [
