@@ -48,4 +48,14 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | expiration_date     | int32   | MJD at which the target should automatically be consider inactive. If empty, the target never expires. |
 | observed            | boolean | 1 if the target has been fully observed and should not be assigned again.                              |
 
-For more details see [this wiki page](https://wiki.sdss.org/display/OPS/Implementation+Targets+of+Opportunity).
+For more details see [this wiki page](https://wiki.sdss.org/display/OPS/Implementation+Targets+of+Opportunity). To regenerate this table run
+
+```python
+>>> from too.datamodel import datamodel_to_markdown
+>>> datamodel_to_markdown()
+| Column              | Type    | Description                                                                                            |
+|---------------------|---------|--------------------------------------------------------------------------------------------------------|
+| too_id              | int64   | Unique identifier for the ToO target [required].                                                       |
+| fiber_type          | string  | Type of fiber to be used to observe the target [required].                                             |
+...
+```
