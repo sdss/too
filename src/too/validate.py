@@ -6,14 +6,14 @@
 # @Filename: validate.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
-import os
-import polars
-import numpy as np
-import pickle
-
-from astropy_healpix import HEALPix
 from astropy.coordinates import SkyCoord
 import astropy.units as u
+from astropy_healpix import HEALPix
+
+import numpy as np
+import os
+import pickle
+import polars
 
 # load enviornment variable with path to healpix maps
 BN_HEALPIX = os.getenv('BN_HEALPIX')
