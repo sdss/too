@@ -56,6 +56,7 @@ def bn_validation(targets: polars.DataFrame, design_mode: str):
     hp = HEALPix(nside=2 ** 18, order='ring', frame='icrs')
 
     # get the indicies for all targets
+    # do I need to account for offsets and proper motions here?
     coord = SkyCoord(ra=targets['ra'].to_numpy() * u.deg,
                      dec=targets['dec'].to_numpy() * u.deg)
     hp_inds = hp.skycoord_to_healpix(coord)
