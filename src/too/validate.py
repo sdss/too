@@ -10,6 +10,7 @@ import os
 import polars
 import numpy as np
 import pickle
+
 from astropy_healpix import HEALPix
 from astropy.coordinates import SkyCoord
 import astropy.units as u
@@ -62,10 +63,12 @@ def bn_validation(targets: polars.DataFrame, design_mode: str):
     # check if ToOs in bright neighbor healpixels
     valid_too = np.zeros(len(targets), dtype=bool) + True
 
-    # in future, is there faster way to do this? would using sets be better?
     ev_boss = targets['fiber_type'] == 'BOSS'
-    valid_too[ev_boss] = ~np.isin(hp_inds[ev_boss], bn_maps_boss)  # oppisite as True == valid target
+    # oppisite as True == valid target
+    valid_too[ev_boss] = ~np.isin(hp_inds[ev_boss], bn_maps_boss)
+    # in future, is there faster way to do this? would using sets be better?
 
     ev_apogee = targets['fiber_type'] == 'APOGEE'
-    valid_too[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)  # oppisite as True == valid target
+    # oppisite as True == valid target
+    valid_too[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)
     return valid_too
