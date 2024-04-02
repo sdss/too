@@ -19,7 +19,8 @@ import polars
 BN_HEALPIX = os.getenv('BN_HEALPIX')
 
 
-def bn_validation(targets: polars.DataFrame, design_mode: str):
+def bn_validation(targets: polars.DataFrame,
+                  design_mode: str) -> np.ndarray:
     """
     Validate a ToO to see if it is too close
     to a bright neighbor. This functionm relies on the
@@ -36,6 +37,13 @@ def bn_validation(targets: polars.DataFrame, design_mode: str):
 
     design_mode: str
         The design_mode to run the validation for
+
+
+    Return
+    ------
+    valid_too: np.array
+        bright neighbor validation for specified design_mode.
+        True means passes check.
     """
     # load the healpix indicies for the designmode
     bn_maps_boss_file = '{BN_HEALPIX}/{design_mode}_{instrument}_bn_healpix.pkl'\
