@@ -6,9 +6,9 @@
 # @Filename: validate.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
+from astropy_healpix import HEALPix
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-from astropy_healpix import HEALPix
 
 import numpy as np
 import os
