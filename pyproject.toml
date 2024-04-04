@@ -27,7 +27,8 @@ sdssdb = { git = "https://github.com/sdss/sdssdb.git", branch = "albireox/too_ta
 pyarrow = "^15.0.0"
 click-option-group = "^0.5.6"
 astropy-healpix = "^1.0.2"
-astropy = "^6.0.1"
+astropy = "^5.1"
+sdss-coordio = "^1.10.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = ">=8.21.0"
