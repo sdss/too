@@ -117,7 +117,8 @@ def calculate_offsets(targets: polars.DataFrame,
 
 
 def bn_validation(targets: polars.DataFrame,
-                  design_mode: str) -> np.ndarray:
+                  design_mode: str,
+                  observatory: str = 'APO') -> np.ndarray:
     """
     Validate a ToO to see if it is too close
     to a bright neighbor. This functionm relies on the
@@ -134,7 +135,10 @@ def bn_validation(targets: polars.DataFrame,
 
     design_mode: str
         The design_mode to run the validation for
-
+    
+    observatory: str
+        Observatory where observation is taking place, either
+        'LCO' or 'APO'.
 
     Return
     ------
@@ -162,7 +166,8 @@ def bn_validation(targets: polars.DataFrame,
 
     # calculate the offsets
     delta_ra, delta_dec, offset_flag = calculate_offsets(targets,
-                                                         design_mode)
+                                                         design_mode,
+                                                         observatory=observatory)
     # get the new ra and dec
     # still need proper motion correction?
     ra_off, dec_off = _offset_radec(ra=targets['ra'].to_numpy(),
