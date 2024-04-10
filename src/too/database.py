@@ -14,6 +14,7 @@ import polars
 
 from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db import catalogdb
+from sdsstools.time import get_sjd
 
 from too import log
 from too.datamodel import mag_columns, too_dtypes, too_metadata_columns
@@ -26,6 +27,7 @@ __all__ = [
     "get_database_uri",
     "validate_too_targets",
     "load_too_targets",
+    "get_active_targets",
 ]
 
 
@@ -261,3 +263,38 @@ def load_too_targets(
     database.execute_sql("VACUUM ANALYZE catalogdb.too_metadata;")
 
     return new_targets
+
+
+def get_active_targets(database: PeeweeDatabaseConnection):
+    """Returns the list of active ToO targets.
+
+    Parameters
+    ----------
+    database
+        The database connection.
+
+    Returns
+    -------
+    dataframe
+        A dataframe with the active ToO targets. These include targets from
+        ``catalogdb.too_target`` that have ``active`` set to ``true`` and whose
+        ``expiration_date`` is greater or equal the current MJD.
+
+    """
+
+    assert database.connected, "Database is not connected."
+
+    database_uri = database_uri_from_connection(database)
+
+    targets = polars.read_database_uri(
+        "SELECT t.*,tm.* FROM catalogdb.too_target t JOIN catalogdb.too_metadata tm "
+        "USING (too_id) WHERE tm.active = true AND tm.observed = false",
+        database_uri,
+        engine="adbc",
+    )
+
+    mjd = get_sjd("APO") + 1
+
+    targets = targets.filter(polars.col.expiration_date >= mjd)
+
+    return targets
