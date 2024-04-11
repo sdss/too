@@ -247,6 +247,30 @@ CREATE TABLE targetdb.cadence (
     label_version TEXT DEFAULT ''::TEXT
 );
 
+CREATE TABLE targetdb.design_mode (
+    label TEXT PRIMARY KEY,
+    boss_skies_min INTEGER,
+    boss_skies_fov DOUBLE PRECISION[],
+    apogee_skies_min INTEGER,
+    apogee_skies_fov DOUBLE PRECISION[],
+    boss_stds_min INTEGER,
+    boss_stds_mags_min DOUBLE PRECISION[],
+    boss_stds_mags_max DOUBLE PRECISION[],
+    boss_stds_fov DOUBLE PRECISION[],
+    apogee_stds_min INTEGER,
+    apogee_stds_mags_min DOUBLE PRECISION[],
+    apogee_stds_mags_max DOUBLE PRECISION[],
+    apogee_stds_fov DOUBLE PRECISION[],
+    boss_bright_limit_targets_min DOUBLE PRECISION[],
+    boss_bright_limit_targets_max DOUBLE PRECISION[],
+    boss_trace_diff_targets DOUBLE PRECISION,
+    boss_sky_neighbors_targets DOUBLE PRECISION[],
+    apogee_bright_limit_targets_min DOUBLE PRECISION[],
+    apogee_bright_limit_targets_max DOUBLE PRECISION[],
+    apogee_trace_diff_targets DOUBLE PRECISION,
+    apogee_sky_neighbors_targets DOUBLE PRECISION[]
+);
+
 \copy catalogdb.catalog FROM PROGRAM 'gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM 'gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM 'gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
@@ -255,6 +279,8 @@ CREATE TABLE targetdb.cadence (
 \copy catalogdb.gaia_dr3_source FROM PROGRAM 'gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
 -- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM 'gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
 \copy catalogdb.twomass_psc FROM PROGRAM 'gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
+
+\copy targetdb.design_mode FROM 'design_mode.csv' WITH CSV HEADER;
 
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
@@ -318,6 +344,8 @@ CREATE UNIQUE INDEX ON targetdb.cadence(pk int8_ops);
 CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
 CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
 CREATE INDEX ON targetdb.cadence(nepochs int4_ops);
+
+CREATE UNIQUE INDEX design_mode_pkey ON targetdb.design_mode(label);
 
 INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}', '{1}', '{0}', 1, null, 'bright_1x1');

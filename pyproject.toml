@@ -65,7 +65,7 @@ section-order = ["future", "standard-library", "typing", "third-party", "sdss", 
 
 [tool.ruff.lint.isort.sections]
 typing = ["typing"]
-sdss = ["sdsstools", "clu", "target_selection", "sdssdb"]
+sdss = ["sdsstools", "clu", "target_selection", "sdssdb", "coordio"]
 
 [tool.pytest.ini_options]
 addopts = "--cov too --cov-report xml --cov-report html --cov-report term -W ignore"

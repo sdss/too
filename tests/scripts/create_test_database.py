@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
 import subprocess
 
 from sdssdb.peewee.sdss5db import catalogdb
@@ -84,6 +85,8 @@ def create_test_database(
             url = f"{BASE_URL}/{file}"
             log.info(f"File {file!r} not found in cache. Downloading from {url}")
             download_file(url, CACHE_PATH, transient_progress=True, console=console)
+
+    shutil.copy2(pathlib.Path(__file__).parent / "design_mode.csv", CACHE_PATH)
 
     log.info("Proceeding with the creation of the test database.")
     script_path = pathlib.Path(__file__).parent / "sdss5db_too_test.sql"
