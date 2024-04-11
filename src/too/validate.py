@@ -12,7 +12,7 @@ from astropy.time import Time
 import astropy.units as u
 from coordio.utils import (object_offset, Moffat2dInterp,
                            _offset_radec)
-from mugatu.designmode import allDesignModes
+from mugatu.designmode import allDesignModes, check_assign_mag_limit
 import numpy as np
 import os
 import pickle
@@ -27,6 +27,34 @@ fmagloss = Moffat2dInterp()
 
 # grab all designmode values
 modes = allDesignModes()
+
+
+def magnitude_array(targets: polars.DataFrame) -> np.ndarray:
+    """
+    create the magnitude array for the targets
+
+    Parameters
+    ----------
+    targets: polars.DataFrame
+        DataFrame with the ToO target information
+
+    Returns
+    -------
+    magnitudes: np.array
+        Magnitude array for the targets. Array is of size (N, 10),
+        where columns correspond to
+        g, r, i, z, bp, gaia_g, rp, J, H, K band
+        magnitudes.
+    """
+    magnitudes = targets[['g_mag','r_mag', 'i_mag',
+                          'z_mag', 'gaia_bp_mag',
+                          'gaia_g_mag', 'gaia_rp_mag']].to_numpy()
+    # add in the missing 2MASS mags as nan
+    magnitudes = np.column_stack((magnitudes,
+                                  np.zeros(len(targets)) + np.nan,
+                                  targets['h_mag'],
+                                  np.zeros(len(targets)) + np.nan))
+    return magnitudes
 
 
 def calculate_offsets(targets: polars.DataFrame,
@@ -77,14 +105,7 @@ def calculate_offsets(targets: polars.DataFrame,
         skybrightness = 0.35
     apogee_mag_lim = modes[design_mode].bright_limit_targets['APOGEE'][:, 0]
 
-    magnitudes = targets[['g_mag','r_mag', 'i_mag',
-                          'z_mag', 'gaia_bp_mag',
-                          'gaia_g_mag', 'gaia_rp_mag']].to_numpy()
-    # add in the missing 2MASS mags as nan
-    magnitudes = np.column_stack((magnitudes,
-                                  np.zeros(len(targets)) + np.nan,
-                                  targets['h_mag'],
-                                  np.zeros(len(targets)) + np.nan))
+    magnitudes = magnitude_array(targets)
 
     ev_boss = targets['fiber_type'] == 'BOSS'
     res = object_offset(magnitudes[ev_boss, :],
@@ -203,3 +224,115 @@ def bn_validation(targets: polars.DataFrame,
     # oppisite as True == valid target
     valid_too[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)
     return valid_too
+
+
+def mag_limit_check(magnitudes: np.ndarray,
+                    can_offset: np.ndarray,
+                    offset_flag: np.ndarray,
+                    mag_metric: np.ndarray) -> np.ndarray:
+    """
+    perform a specific magnitude check
+
+    Parameters
+    ----------
+    magnitudes: np.array
+        Magnitude array for the targets. Array is of size (N, 10),
+        where columns correspond to
+        g, r, i, z, bp, gaia_g, rp, J, H, K band
+        magnitudes.
+
+    can_offset: np.array
+        If target can be offset or not
+
+    offset_flag: np.array
+        offset_flags from offset function
+
+    mag_metric: np.array
+        the magnitude limits for the specific designmode
+        and isntrument
+
+    Return
+    ------
+    valid_too_mag_lim: np.array
+        magnitude limit validation for specified design_mode.
+        True means passes check.
+    """
+    valid_too_mag_lim = np.zeros(len(magnitudes),
+                                 dtype=bool)
+    check_inds = []
+    for i in range(mag_metric.shape[0]):
+        if mag_metric[i][0] != -999. or mag_metric[i][1] != -999.:
+            check_inds.append(i)
+
+    # run checks
+    for i in range(len(valid_too_mag_lim)):
+        # don't do check and make true if offset target
+        if can_offset[i] and offset_flag[i] == 0:
+            valid_too_mag_lim[i] = True
+        else:
+            # check in each band that has check defined
+            targ_check = np.zeros(len(check_inds), dtype=bool)
+            for j, ind in enumerate(check_inds):
+                # check the magntiude for this assignment
+                targ_check[j], _ = check_assign_mag_limit(
+                    mag_metric[ind][0],
+                    mag_metric[ind][1],
+                    magnitudes[i][ind])
+            # if all True, then passes
+            if np.all(targ_check):
+                valid_too_mag_lim[i] = True
+    return valid_too_mag_lim
+
+
+def mag_lim_validation(targets: polars.DataFrame,
+                       design_mode: str,
+                       observatory: str = 'APO') -> np.ndarray:
+    """
+    Perform a magnitude limit check on the ToOs
+
+    Parameters
+    ----------
+    targets: polars.DataFrame
+        DataFrame with the ToO target information
+
+    design_mode: str
+        The design_mode to run the validation for
+
+    observatory: str
+        Observatory where observation is taking place, either
+        'LCO' or 'APO'.
+
+    Return
+    ------
+    valid_too_mag_lim: np.array
+        magnitude limit validation for specified design_mode.
+        True means passes check.
+    """
+    valid_too_mag_lim = np.zeros(len(targets),
+                                 dtype=bool)
+
+    # get the magnitude array
+    magnitudes = magnitude_array(targets)
+
+    # get offset flags
+    # calculate the offsets
+    _, _, offset_flag = calculate_offsets(targets,
+                                          design_mode,
+                                          observatory=observatory)
+
+    # do check for BOSS
+    ev_boss = targets['fiber_type'] == 'BOSS'
+    valid_too_mag_lim[ev_boss] = mag_limit_check(
+        magnitudes[ev_boss, :],
+        targets['can_offset'].to_numpy()[ev_boss],
+        offset_flag[ev_boss],
+        modes[design_mode].bright_limit_targets['BOSS'])
+
+    # do check for APOGEE
+    ev_apogee = targets['fiber_type'] == 'APOGEE'
+    valid_too_mag_lim[ev_boss] = mag_limit_check(
+        magnitudes[ev_apogee, :],
+        targets['can_offset'].to_numpy()[ev_apogee],
+        offset_flag[ev_apogee],
+        modes[design_mode].bright_limit_targets['APOGEE'])
+    return valid_too_mag_lim
