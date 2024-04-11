@@ -163,7 +163,7 @@ def bn_validation(targets: polars.DataFrame,
 
     Return
     ------
-    valid_too: np.array
+    valid_too_bn: np.array
         bright neighbor validation for specified design_mode.
         True means passes check.
     """
@@ -213,17 +213,17 @@ def bn_validation(targets: polars.DataFrame,
     hp_inds = hp.skycoord_to_healpix(coord)
 
     # check if ToOs in bright neighbor healpixels
-    valid_too = np.zeros(len(targets), dtype=bool) + True
+    valid_too_bn = np.zeros(len(targets), dtype=bool) + True
 
     ev_boss = targets['fiber_type'] == 'BOSS'
     # oppisite as True == valid target
-    valid_too[ev_boss] = ~np.isin(hp_inds[ev_boss], bn_maps_boss)
+    valid_too_bn[ev_boss] = ~np.isin(hp_inds[ev_boss], bn_maps_boss)
     # in future, is there faster way to do this? would using sets be better?
 
     ev_apogee = targets['fiber_type'] == 'APOGEE'
     # oppisite as True == valid target
-    valid_too[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)
-    return valid_too
+    valid_too_bn[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)
+    return valid_too_bn
 
 
 def mag_limit_check(magnitudes: np.ndarray,
