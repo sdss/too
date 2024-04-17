@@ -49,10 +49,11 @@ jobs:
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
-      - name: Create database
+      - name: Create database and user
         run: |
           createdb sdss5db_too_test
           psql -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
+          psql -c "CREATE USER sdss WITH SUPERUSER;" -d sdss5db_too_test
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
