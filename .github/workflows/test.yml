@@ -59,10 +59,11 @@ jobs:
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
-      - name: Install dependencies
+      - name: Test connection
         run: |
-          pip install --upgrade wheel pip setuptools
-          pip install .
+          psql -c "\du" -U sdss -h localhost -d sdss5db_too_test
+        env:
+          PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
       - name: Populate database
         run: |
@@ -70,6 +71,11 @@ jobs:
           python create_test_database.py
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade wheel pip setuptools
+          pip install .
 
       - name: Test with pytest
         run: |
