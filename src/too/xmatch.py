@@ -82,7 +82,8 @@ TOO_XMATCH_CONFIG = {
 def xmatch_too_targets(
     database: PeeweeDatabaseConnection,
     version_plan: str | None = None,
-    load_catalog: bool = True,
+    dry_run: bool = False,
+    overwrite=False,
     keep_temp: bool = False,
 ):
     """Performs a cross-match of the ToO targets with the SDSS catalogues.
@@ -104,8 +105,11 @@ def xmatch_too_targets(
         The database connection to use.
     version_plan
         The version plan to use. Defaults to the latest plan.
-    load_catalog
-        Whether to load the ``catalog`` table after the cross-match.
+    dry_run
+        Whether to load the ``catalog`` and ``catalog_to_too_target`` tables after
+        the cross-match.
+    overwrite
+        Deletes the temporary tables if they exist.
     keep_temp
         Whether to keep the temporary tables after the cross-match.
 
@@ -166,6 +170,28 @@ def xmatch_too_targets(
         log.warning("All ToO targets are already matched.")
         return
 
+    # Create the XMatch instance here. We'll need it to get the relational model.
+    xmatch_planner = XMatchPlanner.read(
+        database,
+        plan=TOO_XMATCH_PLAN,
+        config_file=TOO_XMATCH_CONFIG,
+        log=log,
+        log_path=None,
+    )
+
+    # Delete temporary tables or fail.
+    md5 = xmatch_planner.md5
+    for temp_table in ["catalog", "catalog_to_too_target"]:
+        temp_table_name = f"{temp_table}_{md5}"
+        temp_table_schema = xmatch_planner.temp_schema
+        temp_table_full = f"{temp_table_schema}.{temp_table_name}"
+        if database.table_exists(temp_table_name, schema=temp_table_schema):
+            if overwrite:
+                log.warning(f"Dropping table {temp_table_full}.")
+                database.execute_sql(f"DROP TABLE {temp_table_full};")
+            else:
+                raise RuntimeError(f"Table {temp_table_full} already exists.")
+
     # Step 1: select targets with sdss_id and without catalogid.
     # Populate the catalogid column.
     too_catalogid = too_unmatched.filter(
@@ -196,10 +222,21 @@ def xmatch_too_targets(
     )
     too_catalogid = too_catalogid.select("too_id", "catalogid")
 
-    # Step 2: insert the targets with catalogid into the catalog_to_too_target table.
+    # Step 2: insert the targets with catalogid into the sanboxed (!)
+    # catalog_to_too_target table.
     if len(too_catalogid) > 0:
+        rel_model_sb = xmatch_planner.get_relational_model(
+            ToO_Target,
+            sandboxed=True,
+            create=True,
+            temp=False,
+        )
+
+        rel_model_sb_tn = f"{rel_model_sb._meta.schema}.{rel_model_sb._meta.table_name}"
+
         log.info(
-            f"Adding {len(too_catalogid)} ToO targets with catalogid to {too_rel_fqtn}."
+            f"Adding {len(too_catalogid)} ToO targets with "
+            f"catalogid to {rel_model_sb_tn}."
         )
 
         too_catalogid = too_catalogid.rename({"too_id": "target_id"})
@@ -209,23 +246,16 @@ def xmatch_too_targets(
         )
 
         too_catalogid.write_database(
-            too_rel_fqtn,
+            rel_model_sb_tn,
             database_uri,
             if_table_exists="append",
             engine="adbc",
         )
 
-        database.execute_sql(f"VACUUM ANALYZE {too_rel_fqtn};")
+        database.execute_sql(f"VACUUM ANALYZE {rel_model_sb_tn};")
 
     # Step 3: cross-match the remaining targets.
     log.info("Running cross-match for remaining ToO targets.")
-    xmatch_planner = XMatchPlanner.read(
-        database,
-        plan=TOO_XMATCH_PLAN,
-        config_file=TOO_XMATCH_CONFIG,
-        log=log,
-        log_path=None,
-    )
 
     # Set the starting catalogid as the max of the ToO catalogids. This is because
     # we always use run_id=9 for ToOs and we should have plenty of them (and if for
@@ -249,21 +279,6 @@ def xmatch_too_targets(
     if max_cid:
         xmatch_planner._max_cid = max_cid + 1
 
-    # If we have a temporary catalog table, we also need to check its max catalogid
-    # as those won't have been added to the real catalog table yet.
-    temp_table = xmatch_planner._temp_table
-    if database.table_exists(temp_table, schema="sandbox"):
-        max_cid_temp = database.execute_sql(
-            f"SELECT MAX(catalogid) FROM sandbox.{temp_table};"
-        ).fetchone()[0]
-        if max_cid_temp is not None and max_cid_temp > xmatch_planner._max_cid:
-            xmatch_planner._max_cid = max_cid_temp + 1
+    xmatch_planner.run(dry_run=dry_run, keep_temp=keep_temp, force=True)
 
-    xmatch_planner.run(load_catalog=load_catalog, keep_temp=keep_temp, force=True)
-
-    if load_catalog is False:
-        from target_selection.xmatch import TempCatalog
-
-        return TempCatalog
-    else:
-        return Catalog
+    return xmatch_planner

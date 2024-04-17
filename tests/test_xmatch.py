@@ -38,19 +38,24 @@ def test_xmatch_prepare(too_mock: polars.DataFrame):
 def test_xmatch_1():
     n_too = catalogdb.ToO_Target.select().count()
 
-    TempCatalog = xmatch_too_targets(
+    xmatch_planner = xmatch_too_targets(
         catalogdb.database,
+        dry_run=True,
         keep_temp=True,
-        load_catalog=False,
+        overwrite=True,
     )
-    assert TempCatalog is not None
 
-    CatalogToToO_Target = catalogdb.database.models["catalogdb.catalog_to_too_target"]
+    assert xmatch_planner is not None
+
+    TempCatalog = xmatch_planner.get_output_model(temporary=True)
+    TempC2T = xmatch_planner.get_relational_model(
+        catalogdb.ToO_Target,
+        sandboxed=True,
+        create=False,
+    )
+
     n_target_id = (
-        CatalogToToO_Target.select()
-        .where(CatalogToToO_Target.best >> 1)
-        .distinct(CatalogToToO_Target.target_id)
-        .count()
+        TempC2T.select().where(TempC2T.best >> 1).distinct(TempC2T.target_id).count()
     )
 
     assert n_target_id == n_too
@@ -61,27 +66,40 @@ def test_xmatch_2(too_mock: polars.DataFrame):
     too_mock_sample = too_mock[100000:200000]
     load_too_targets(too_mock_sample, catalogdb.database)
 
-    TempCatalog = xmatch_too_targets(
+    xmatch_planner = xmatch_too_targets(
         catalogdb.database,
+        dry_run=True,
         keep_temp=True,
-        load_catalog=False,
+        overwrite=True,
     )
 
+    assert xmatch_planner is not None
+
+    TempCatalog = xmatch_planner.get_output_model(temporary=True)
+
     assert TempCatalog is not None
-    assert TempCatalog.select().count() == 62748
+    assert TempCatalog.select().count() == 62867
 
 
-def test_xmatch_3(too_mock: polars.DataFrame):
+def test_xmatch_3():
+    with pytest.raises(RuntimeError):
+        xmatch_too_targets(catalogdb.database, overwrite=False)
+
+
+def test_xmatch_4(too_mock: polars.DataFrame):
     too_mock_sample = too_mock[300000:400000]
     load_too_targets(too_mock_sample, catalogdb.database)
 
-    Model = xmatch_too_targets(catalogdb.database)
+    xmatch_planner = xmatch_too_targets(catalogdb.database, overwrite=True)
+    assert xmatch_planner is not None
 
-    assert Model is not None and Model == catalogdb.Catalog
-    assert Model.select().count() == 3092773
+    Model = xmatch_planner.get_output_model(temporary=False)
+
+    assert Model is not None and Model._meta.table_name == "catalog"
+    assert Model.select().count() == 3093109
 
 
-def test_xmatch_4(caplog: pytest.LogCaptureFixture):
+def test_xmatch_5(caplog: pytest.LogCaptureFixture):
     xmatch_too_targets(catalogdb.database)
 
     assert caplog.record_tuples[-1][2] == "All ToO targets are already matched."
