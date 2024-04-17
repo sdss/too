@@ -53,7 +53,9 @@ jobs:
         run: |
           createdb sdss5db_too_test
           psql -c "CREATE EXTENSION q3c;" -d sdss5db_too_test
-          psql -c "CREATE USER sdss WITH SUPERUSER;" -d sdss5db_too_test
+          psql -c "CREATE USER sdss WITH LOGIN SUPERUSER PASSWORD 'p1234';" -d sdss5db_too_test
+          echo "*:*:sdss5db_too_test:sdss:p1234" > ~/.pgpass
+          chmod 600 ~/.pgpass
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
