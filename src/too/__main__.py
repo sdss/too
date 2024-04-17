@@ -53,7 +53,7 @@ server_options = OptionGroup(
 )
 @server_options.option(
     "--user",
-    default=None,
+    default="sdss",
     help="The user to connect to the database.",
 )
 @click.option(
@@ -74,7 +74,7 @@ def too_cli(
     dbname: str = "sdss5db",
     host: str = "localhost",
     port: int | None = None,
-    user: str | None = None,
+    user: str = "sdss",
     verbose: bool = False,
     write_log: str | None = None,
 ):

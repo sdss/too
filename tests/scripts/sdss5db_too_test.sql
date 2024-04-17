@@ -247,14 +247,14 @@ CREATE TABLE targetdb.cadence (
     label_version TEXT DEFAULT ''::TEXT
 );
 
-\copy catalogdb.catalog FROM PROGRAM 'gzip -dc catalog.csv.gz' WITH CSV HEADER;
-\copy catalogdb.sdss_id_stacked FROM PROGRAM 'gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
-\copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM 'gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
--- \copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM 'gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
-\copy catalogdb.catalog_to_twomass_psc FROM PROGRAM 'gzip -dc catalog_to_twomass_psc.csv.gz' WITH CSV HEADER;
-\copy catalogdb.gaia_dr3_source FROM PROGRAM 'gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
--- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM 'gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
-\copy catalogdb.twomass_psc FROM PROGRAM 'gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
+\copy catalogdb.catalog FROM PROGRAM '/usr/bin/gzip -dc catalog.csv.gz' WITH CSV HEADER;
+\copy catalogdb.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
+\copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM '/usr/bin/gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
+\copy catalogdb.catalog_to_twomass_psc FROM PROGRAM '/usr/bin/gzip -dc catalog_to_twomass_psc.csv.gz' WITH CSV HEADER;
+\copy catalogdb.gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM '/usr/bin/gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
+\copy catalogdb.twomass_psc FROM PROGRAM '/usr/bin/gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
 
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
