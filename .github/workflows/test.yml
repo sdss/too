@@ -58,17 +58,17 @@ jobs:
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
+      - name: Install dependencies
+        run: |
+          pip install --upgrade wheel pip setuptools
+          pip install .
+
       - name: Populate database
         run: |
           cd tests/scripts
           python create_test_database.py
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade wheel pip setuptools
-          pip install .
 
       - name: Test with pytest
         run: |
