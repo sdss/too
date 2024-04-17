@@ -61,7 +61,7 @@ jobs:
 
       - name: Test connection
         run: |
-          psql -c "\du" -U sdss -h localhost -d sdss5db_too_test
+          psql -c "\du" -U sdss -d sdss5db_too_test
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
