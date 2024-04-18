@@ -39,6 +39,8 @@ def max_cid():
 def connect_and_revert_database(max_cid: int):
     """Reverts the database to the original state."""
 
+    mj5 = "62abc69fd3fad42d"
+
     execute_sql = catalogdb.database.execute_sql
 
     connect_to_database(DBNAME)
@@ -52,9 +54,15 @@ def connect_and_revert_database(max_cid: int):
     execute_sql("TRUNCATE TABLE targetdb.carton;")
     execute_sql("TRUNCATE TABLE targetdb.magnitude;")
 
+    execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_{mj5};")
+    execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_to_too_{mj5};")
+
+    execute_sql("DELETE FROM catalogdb.catalog WHERE lead = 'too_target';")
+
     yield
 
-    execute_sql("DROP TABLE IF EXISTS sandbox.catalog_62abc69fd3fad42d;")
+    execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_{mj5};")
+    execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_to_too_{mj5};")
     execute_sql(f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};")
 
 

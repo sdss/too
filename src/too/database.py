@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 
 import polars
@@ -30,15 +31,21 @@ __all__ = [
     "get_active_targets",
 ]
 
+DEFAULT_USER: str = "sdss"
+DEFAULT_HOST = "localhost"
+
 
 def connect_to_database(
     dbname: str,
-    host: str = "localhost",
+    host: str | None = None,
     port: int | None = None,
     user: str | None = None,
     password: str | None = None,
 ):
     """Connects the ``sdssdb`` ``sdss5db`` models to the database."""
+
+    if port is None:
+        port = int(os.environ.get("PGPORT", 5432))
 
     catalogdb.database.connect(
         dbname,
@@ -56,21 +63,24 @@ def connect_to_database(
 
 def get_database_uri(
     dbname: str,
-    host: str = "localhost",
+    host: str | None = None,
     port: int | None = None,
     user: str | None = None,
     password: str | None = None,
 ):
     """Returns the URI to the database."""
 
-    if user is None and password is None:
+    user = user or str(os.environ.get("PGUSER", DEFAULT_USER))
+    host = host or str(os.environ.get("PGHOST", DEFAULT_HOST))
+    port = port or int(os.environ.get("PGPORT", 5432))
+
+    if user is None and password is None:  # pragma: no cover
+        # This should never happen. user is always set.
         auth: str = ""
-    elif user is not None and password is None:
+    elif password is None:
         auth: str = f"{user}@"
-    elif user is not None and password is not None:
-        auth: str = f"{user}:{password}@"
     else:
-        raise ValueError("Passing a password requires also passing a user.")
+        auth: str = f"{user}:{password}@"
 
     host_port: str = f"{host or ''}" if port is None else f"{host or ''}:{port}"
 

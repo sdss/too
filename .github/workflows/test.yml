@@ -35,6 +35,8 @@ jobs:
 
       - name: Install Postgresql
         uses: ikalnytskyi/action-setup-postgres@v5
+        with:
+          username: sdss
         id: postgres
 
       - name: Install Q3C

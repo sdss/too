@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import os
+
 import polars
 import pytest
 from conftest import DBNAME
@@ -23,6 +25,9 @@ from too.database import (
     validate_too_targets,
 )
 from too.exceptions import ValidationError
+
+
+PGPORT = os.environ.get("PGPORT", 5432)
 
 
 def test_database_exists():
@@ -61,8 +66,8 @@ def test_models_exist():
 @pytest.mark.parametrize(
     "dbname,user,password,host,port,expected",
     [
-        ("testdb", None, None, "localhost", None, "localhost/testdb"),
-        ("testdb", "user", "1234", "localhost", None, "user:1234@localhost/testdb"),
+        ("testdb", None, None, "localhost", PGPORT, f"sdss@localhost:{PGPORT}/testdb"),
+        ("db", "user", "1234", "10.1.1.1", PGPORT, f"user:1234@10.1.1.1:{PGPORT}/db"),
         ("testdb", "user", None, "localhost", 5432, "user@localhost:5432/testdb"),
     ],
 )
@@ -84,11 +89,6 @@ def test_get_database_uri(
     )
 
     assert uri == f"postgresql://{expected}"
-
-
-def test_get_database_uri_password_fails():
-    with pytest.raises(ValueError):
-        get_database_uri("testdb", password="1234")
 
 
 def test_validate_too_target_passes(too_mock: polars.DataFrame):
