@@ -73,6 +73,7 @@ too_metadata_columns = [
     "h_mag",
     "delta_ra",
     "delta_dec",
+    "can_offset",
     "inertial",
     "n_exposures",
     "priority",

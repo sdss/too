@@ -277,6 +277,7 @@ def create_mock_too_catalogue(
     df = df.with_columns(
         fiber_type=polars.Series(fiber_type, dtype=polars.String),
         observed=False,
+        can_offset=True,
         active=True,
         priority=polars.lit(5, dtype=polars.Int16),
         n_exposures=polars.lit(3, dtype=polars.Int16),

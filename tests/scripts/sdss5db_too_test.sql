@@ -143,6 +143,7 @@ CREATE TABLE catalogdb.too_metadata (
     h_mag REAL,
     delta_ra REAL,
     delta_dec REAL,
+    can_offset BOOLEAN,
     inertial BOOLEAN,
     n_exposures SMALLINT,
     priority SMALLINT,
@@ -344,7 +345,7 @@ CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
 CREATE UNIQUE INDEX ON targetdb.cadence(label text_ops);
 CREATE INDEX ON targetdb.cadence(nepochs int4_ops);
 
-CREATE UNIQUE INDEX design_mode_pkey ON targetdb.design_mode(label);
+CREATE UNIQUE INDEX ON targetdb.design_mode(label);
 
 INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}', '{1}', '{0}', 1, null, 'bright_1x1');
