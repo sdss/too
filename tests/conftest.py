@@ -85,3 +85,11 @@ def too_mock():
     sample = create_mock_too_catalogue()
 
     yield sample
+
+
+@pytest.fixture(scope="session")
+def database():
+    database = connect_to_database(DBNAME)
+    assert database.connected, "Database is not connected"
+
+    yield database

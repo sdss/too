@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import os
 
+from typing import TYPE_CHECKING
+
 import polars
 import pytest
 from conftest import DBNAME
@@ -25,6 +27,10 @@ from too.database import (
     validate_too_targets,
 )
 from too.exceptions import ValidationError
+
+
+if TYPE_CHECKING:
+    from sdssdb.connection import PeeweeDatabaseConnection
 
 
 PGPORT = os.environ.get("PGPORT", 5432)
@@ -91,8 +97,11 @@ def test_get_database_uri(
     assert uri == f"postgresql://{expected}"
 
 
-def test_validate_too_target_passes(too_mock: polars.DataFrame):
-    assert isinstance(validate_too_targets(too_mock), polars.DataFrame)
+def test_validate_too_target_passes(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+):
+    assert isinstance(validate_too_targets(too_mock, database), polars.DataFrame)
 
 
 @pytest.mark.parametrize(
@@ -107,10 +116,13 @@ def test_validate_too_target_passes(too_mock: polars.DataFrame):
         ("mag_columns", "ToOs found with missing magnitudes"),
         ("fiber_type", "Invalid fiber_type values."),
         ("sloan_mags", "Found rows with incomplete Sloan magnitudes."),
+        ("can_offset", "Null 'can_offset' column values found"),
+        ("sky_brightness_mode", "Invalid sky_brightness_mode values found."),
     ],
 )
 def test_validate_too_target_fails(
     too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
     test_mode: str,
     error_message: str,
 ):
@@ -139,9 +151,13 @@ def test_validate_too_target_fails(
         too_mock_test = too_mock_test.with_columns(
             u_mag=polars.lit(None, dtype=polars.Float32)
         )
+    elif test_mode == "can_offset":
+        too_mock_test[0, "can_offset"] = None
+    elif test_mode == "sky_brightness_mode":
+        too_mock_test[0, "sky_brightness_mode"] = "INVALID"
 
     with pytest.raises(ValidationError, match=error_message):
-        validate_too_targets(too_mock_test)
+        validate_too_targets(too_mock_test, database)
 
 
 def test_load_too_targets(too_mock: polars.DataFrame, caplog: pytest.LogCaptureFixture):

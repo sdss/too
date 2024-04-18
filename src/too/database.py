@@ -21,6 +21,7 @@ from too import log
 from too.datamodel import mag_columns, too_dtypes, too_metadata_columns
 from too.exceptions import ValidationError
 from too.tools import read_too_file
+from too.validate import allDesignModes
 
 
 __all__ = [
@@ -93,7 +94,7 @@ def database_uri_from_connection(database: PeeweeDatabaseConnection):
     return get_database_uri(database.dbname, **database.connect_params)
 
 
-def validate_too_targets(targets: polars.DataFrame):
+def validate_too_targets(targets: polars.DataFrame, database: PeeweeDatabaseConnection):
     """Validates a list of ToO targets.
 
     Checks the following conditions:
@@ -165,6 +166,18 @@ def validate_too_targets(targets: polars.DataFrame):
             "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."
         )
 
+    # Check can_offset is a boolean and is set.
+    if targets["can_offset"].is_null().any():
+        raise ValidationError("Null 'can_offset' column values found in ToO targets.")
+
+    # Check that the sky_brightness_mode value are valid.
+    valid_design_modes = list(allDesignModes(database))
+    targets_invalid_design_mode = targets.filter(
+        polars.col.sky_brightness_mode.is_in(valid_design_modes).not_()
+    )
+    if len(targets_invalid_design_mode) > 0:
+        raise ValidationError("Invalid sky_brightness_mode values found.")
+
     # Fill some optional columns.
     targets = targets.with_columns(
         active=polars.col.active.fill_null(True),
@@ -190,7 +203,7 @@ def load_too_targets(
     assert database.connected, "Database is not connected."
 
     targets = read_too_file(targets)
-    targets = validate_too_targets(targets)
+    targets = validate_too_targets(targets, database)
 
     too_columns = ["too_id"]
     too_columns += [col for col in too_dtypes if col not in too_metadata_columns]

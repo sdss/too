@@ -6,6 +6,8 @@
 # @Filename: validate.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
+from __future__ import annotations
+
 import collections
 import os
 import pickle
@@ -551,9 +553,9 @@ def mag_limit_check(
 
 
 def mag_lim_validation(
+    database: PeeweeDatabaseConnection,
     targets: polars.DataFrame,
     design_mode: str,
-    modes: dict,
     observatory: str = "APO",
 ) -> np.ndarray:
     """
@@ -577,6 +579,8 @@ def mag_lim_validation(
 
     # get the magnitude array
     magnitudes = magnitude_array(targets)
+
+    modes = allDesignModes(database)
 
     # get offset flags
     # calculate the offsets

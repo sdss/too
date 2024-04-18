@@ -23,6 +23,20 @@ from too.tools import download_file
 __all__ = ["create_mock_too_catalogue"]
 
 
+DEFAULT_DESIGN_MODES = [
+    "bright_time",
+    "dark_plane",
+    "dark_monit",
+    "dark_rm",
+    "dark_faint",
+    "bright_time_eng",
+    "dark_plane_eng",
+    "dark_monit_eng",
+    "dark_rm_eng",
+    "dark_faint_eng",
+]
+
+
 @overload
 def get_sample_data(
     table: Literal["gaia_dr3", "twomass", "photoobj"],
@@ -145,6 +159,7 @@ def create_mock_too_catalogue(
     fraction_known_sdss: float = 0.1,
     fraction_known_twomass: float = 0.1,
     catalogid_likelihood: float = 0.2,
+    design_modes: list[str] = DEFAULT_DESIGN_MODES,
 ):
     """Creates a mock ToO catalogue.
 
@@ -173,6 +188,9 @@ def create_mock_too_catalogue(
     catalogid_likelihood
         The likelihood (0-1) that a target will have a known ``catalogid`` or
         ``sdss_id``.
+    design_modes
+        A list of design modes to randomly assign to the ``sky_brightness_mode``
+        column.
 
     Returns
     -------
@@ -273,6 +291,7 @@ def create_mock_too_catalogue(
     fiber_type = numpy.array(["APOGEE"] * df.height)
     boss_mask = numpy.random.rand(df.height) < 0.5
     fiber_type[numpy.where(boss_mask)[0]] = "BOSS"
+    sky_brightness_mode = numpy.random.choice(design_modes, size=df.height)
 
     df = df.with_columns(
         fiber_type=polars.Series(fiber_type, dtype=polars.String),
@@ -281,6 +300,7 @@ def create_mock_too_catalogue(
         active=True,
         priority=polars.lit(5, dtype=polars.Int16),
         n_exposures=polars.lit(3, dtype=polars.Int16),
+        sky_brightness_mode=polars.Series(sky_brightness_mode, dtype=polars.String),
     )
 
     return df
