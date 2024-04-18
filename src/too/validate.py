@@ -551,7 +551,10 @@ def mag_limit_check(
 
 
 def mag_lim_validation(
-    targets: polars.DataFrame, design_mode: str, modes: dict, observatory: str = "APO"
+    targets: polars.DataFrame,
+    design_mode: str,
+    modes: dict,
+    observatory: str = "APO",
 ) -> np.ndarray:
     """
     Perform a magnitude limit check on the ToOs
