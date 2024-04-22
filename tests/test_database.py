@@ -12,12 +12,15 @@ import os
 
 from typing import TYPE_CHECKING
 
+import numpy
 import polars
 import pytest
+import pytest_mock
 from conftest import DBNAME
 
 from sdssdb.peewee.sdss5db import catalogdb
 
+import too.database
 from too.database import (
     connect_to_database,
     database_uri_from_connection,
@@ -30,10 +33,15 @@ from too.exceptions import ValidationError
 
 
 if TYPE_CHECKING:
+
     from sdssdb.connection import PeeweeDatabaseConnection
 
 
 PGPORT = os.environ.get("PGPORT", 5432)
+
+
+def mock_bn_mag_lim(bn_targets, *args, **kargs):
+    return numpy.ones(len(bn_targets), dtype=bool)
 
 
 def test_database_exists():
@@ -98,8 +106,7 @@ def test_get_database_uri(
 
 
 def test_validate_too_target_passes(
-    too_mock: polars.DataFrame,
-    database: PeeweeDatabaseConnection,
+    too_mock: polars.DataFrame, database: PeeweeDatabaseConnection
 ):
     assert isinstance(validate_too_targets(too_mock, database), polars.DataFrame)
 
@@ -158,6 +165,56 @@ def test_validate_too_target_fails(
 
     with pytest.raises(ValidationError, match=error_message):
         validate_too_targets(too_mock_test, database)
+
+
+def test_validate_bright_limits_fails(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    mocker.patch.object(too.database, "bn_validation", side_effect=RuntimeError)
+
+    with pytest.raises(ValidationError):
+        too.database.validate_bright_limits(too_mock, database)
+
+    assert "Error validating targets for design mode" in caplog.record_tuples[-1][2]
+
+
+@pytest.mark.parametrize("drop_bright_targets", [True, False])
+def test_validate_too_targets_bn_invalid(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    mocker: pytest_mock.MockerFixture,
+    drop_bright_targets: bool,
+    caplog: pytest.LogCaptureFixture,
+):
+    too_mock_bn = too_mock.with_columns(
+        bn_valid=polars.lit(True, dtype=polars.Boolean),
+        mag_lim_valid=polars.lit(True, dtype=polars.Boolean),
+    )
+    too_mock_bn[0, -1] = False
+
+    mocker.patch.object(
+        too.database,
+        "validate_bright_limits",
+        return_value=too_mock_bn,
+    )
+
+    if not drop_bright_targets:
+        with pytest.raises(ValidationError):
+            too.database.validate_too_targets(
+                too_mock,
+                database,
+                drop_bright_targets=drop_bright_targets,
+            )
+    else:
+        too.database.validate_too_targets(
+            too_mock,
+            database,
+            drop_bright_targets=drop_bright_targets,
+        )
+        assert "1 targets failed bright neighbour" in caplog.record_tuples[-1][2]
 
 
 def test_load_too_targets(too_mock: polars.DataFrame, caplog: pytest.LogCaptureFixture):

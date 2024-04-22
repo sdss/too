@@ -14,9 +14,11 @@ import numpy
 import peewee
 import polars
 import pytest
+import pytest_mock
 
 from sdssdb.peewee.sdss5db import catalogdb
 
+import too.database
 from too.database import connect_to_database
 from too.mock import create_mock_too_catalogue
 
@@ -64,6 +66,17 @@ def connect_and_revert_database(max_cid: int):
     execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_{mj5};")
     execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_to_too_{mj5};")
     execute_sql(f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};")
+
+
+@pytest.fixture(autouse=True)
+def mock_bn_validation(mocker: pytest_mock.MockerFixture):
+    """Mocks the bright neighbour and magnitude limit checks."""
+
+    def mock_bn_mag_lim(bn_targets, *args, **kargs):
+        return numpy.ones(len(bn_targets), dtype=bool)
+
+    mocker.patch.object(too.database, "bn_validation", side_effect=mock_bn_mag_lim)
+    mocker.patch.object(too.database, "mag_lim_validation", side_effect=mock_bn_mag_lim)
 
 
 @pytest.fixture()

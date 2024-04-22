@@ -97,21 +97,6 @@ def database_uri_from_connection(database: PeeweeDatabaseConnection):
     return get_database_uri(database.dbname, **database.connect_params)
 
 
-def worker(targets_bmode, design_modes, design_mode):
-    try:
-        with warnings.catch_warnings():
-            # warnings.simplefilter("ignore", category=ErfaWarning)
-            return bn_validation(
-                targets_bmode,
-                design_modes,
-                design_mode,
-                observatory="APO",
-            )
-    except Exception as err:
-        log.error(err)
-        return None
-
-
 def validate_too_targets(
     targets: polars.DataFrame,
     database: PeeweeDatabaseConnection,
@@ -199,16 +184,17 @@ def validate_too_targets(
     # Require both checks to pass.
     bn_invalid = bn_targets.filter(~polars.col.bn_valid | ~polars.col.mag_lim_valid)
 
-    if not drop_bright_targets and len(bn_invalid) > 0:
-        raise ValidationError(
-            f"{len(bn_invalid)} targets failed bright neighbour or "
-            "magnitude limit checks."
-        )
-    else:
-        log.warning(
-            f"{len(bn_invalid)} targets failed bright neighbour or "
-            "magnitude limit checks and will be rejected."
-        )
+    if len(bn_invalid) > 0:
+        if not drop_bright_targets:
+            raise ValidationError(
+                f"{len(bn_invalid)} targets failed bright neighbour or "
+                "magnitude limit checks."
+            )
+        else:
+            log.warning(
+                f"{len(bn_invalid)} targets failed bright neighbour or "
+                "magnitude limit checks and will be rejected."
+            )
         targets = targets.filter(~polars.col.too_id.is_in(bn_invalid["too_id"]))
 
     # Fill some optional columns.
@@ -286,6 +272,9 @@ def validate_bright_limits(
 
             except Exception as err:
                 log.warning(f"Error validating targets for design mode {dmb!r}: {err}")
+
+        if len(valid_bn) == 0 or len(valid_mag_lim) == 0:
+            raise ValidationError("Error validating magnitude limits.")
 
         valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
         valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
