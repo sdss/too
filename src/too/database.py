@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import os
 import pathlib
+import warnings
 
+import numpy
 import polars
+from erfa import ErfaWarning
 
 from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db import catalogdb
@@ -21,7 +24,7 @@ from too import log
 from too.datamodel import mag_columns, too_dtypes, too_metadata_columns
 from too.exceptions import ValidationError
 from too.tools import read_too_file
-from too.validate import allDesignModes
+from too.validate import DesignMode, allDesignModes, bn_validation, mag_lim_validation
 
 
 __all__ = [
@@ -94,7 +97,26 @@ def database_uri_from_connection(database: PeeweeDatabaseConnection):
     return get_database_uri(database.dbname, **database.connect_params)
 
 
-def validate_too_targets(targets: polars.DataFrame, database: PeeweeDatabaseConnection):
+def worker(targets_bmode, design_modes, design_mode):
+    try:
+        with warnings.catch_warnings():
+            # warnings.simplefilter("ignore", category=ErfaWarning)
+            return bn_validation(
+                targets_bmode,
+                design_modes,
+                design_mode,
+                observatory="APO",
+            )
+    except Exception as err:
+        log.error(err)
+        return None
+
+
+def validate_too_targets(
+    targets: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    drop_bright_targets: bool = False,
+):
     """Validates a list of ToO targets.
 
     Checks the following conditions:
@@ -170,13 +192,24 @@ def validate_too_targets(targets: polars.DataFrame, database: PeeweeDatabaseConn
     if targets["can_offset"].is_null().any():
         raise ValidationError("Null 'can_offset' column values found in ToO targets.")
 
-    # Check that the sky_brightness_mode value are valid.
-    valid_design_modes = list(allDesignModes(database))
-    targets_invalid_design_mode = targets.filter(
-        polars.col.sky_brightness_mode.is_in(valid_design_modes).not_()
-    )
-    if len(targets_invalid_design_mode) > 0:
-        raise ValidationError("Invalid sky_brightness_mode values found.")
+    # Validate magnitude limits and bright neighbours.
+    log.info("Running bright neighbour and magnitude limit checks.")
+    bn_targets = validate_bright_limits(targets, database)
+
+    # Require both checks to pass.
+    bn_invalid = bn_targets.filter(~polars.col.bn_valid | ~polars.col.mag_lim_valid)
+
+    if not drop_bright_targets and len(bn_invalid) > 0:
+        raise ValidationError(
+            f"{len(bn_invalid)} targets failed bright neighbour or "
+            "magnitude limit checks."
+        )
+    else:
+        log.warning(
+            f"{len(bn_invalid)} targets failed bright neighbour or "
+            "magnitude limit checks and will be rejected."
+        )
+        targets = targets.filter(~polars.col.too_id.is_in(bn_invalid["too_id"]))
 
     # Fill some optional columns.
     targets = targets.with_columns(
@@ -191,6 +224,79 @@ def validate_too_targets(targets: polars.DataFrame, database: PeeweeDatabaseConn
     )
 
     return targets
+
+
+def validate_bright_limits(
+    targets: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+):
+    """Runs the Mugatu-like validation for bright targets."""
+
+    targets = targets.clone()
+
+    # Check that the sky_brightness_mode value are valid.
+    valid_brightness_modes = ["bright", "dark"]
+
+    targets_invalid_brightness_mode = targets.filter(
+        polars.col.sky_brightness_mode.is_in(valid_brightness_modes).not_()
+    )
+    if len(targets_invalid_brightness_mode) > 0:
+        raise ValidationError("Invalid sky_brightness_mode values found.")
+
+    # Get a list of design modes.
+    design_modes: dict[str, DesignMode] = allDesignModes(database)
+
+    # List of validated targets for each brightness mode.
+    targets_bmode_validated: list[polars.DataFrame] = []
+
+    # First we split the targets by sky_brightness_mode (bright or dark). Then
+    # we run the check for all the design modes that match that brightness mode.
+    # We do not reject targets here but we mark if they pass the bright neighbour
+    # and magnitude limit checks.
+    for bmode in valid_brightness_modes:
+        targets_bmode = targets.filter(polars.col.sky_brightness_mode == bmode)
+        design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
+
+        valid_bn: list[numpy.ndarray] = []
+        valid_mag_lim: list[numpy.ndarray] = []
+
+        for dmb in design_modes_bmode:
+            log.debug(f"Validating bright neighbours for design mode: {dmb}")
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=ErfaWarning)
+
+                    valid_bn.append(
+                        bn_validation(
+                            targets_bmode,
+                            dmb,
+                            design_modes,
+                            observatory="APO",
+                        )
+                    )
+
+                    valid_mag_lim.append(
+                        mag_lim_validation(
+                            targets_bmode,
+                            dmb,
+                            design_modes,
+                            observatory="APO",
+                        )
+                    )
+
+            except Exception as err:
+                log.warning(f"Error validating targets for design mode {dmb!r}: {err}")
+
+        valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
+        valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
+
+        targets_bmode = targets_bmode.with_columns(
+            bn_valid=polars.Series(valid_bn_1d),
+            mag_lim_valid=polars.Series(valid_mag_lim_1d),
+        )
+        targets_bmode_validated.append(targets_bmode)
+
+    return polars.concat(targets_bmode_validated)
 
 
 def load_too_targets(
