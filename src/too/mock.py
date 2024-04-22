@@ -23,20 +23,6 @@ from too.tools import download_file
 __all__ = ["create_mock_too_catalogue"]
 
 
-DEFAULT_DESIGN_MODES = [
-    "bright_time",
-    "dark_plane",
-    "dark_monit",
-    "dark_rm",
-    "dark_faint",
-    "bright_time_eng",
-    "dark_plane_eng",
-    "dark_monit_eng",
-    "dark_rm_eng",
-    "dark_faint_eng",
-]
-
-
 @overload
 def get_sample_data(
     table: Literal["gaia_dr3", "twomass", "photoobj"],
@@ -159,7 +145,7 @@ def create_mock_too_catalogue(
     fraction_known_sdss: float = 0.1,
     fraction_known_twomass: float = 0.1,
     catalogid_likelihood: float = 0.2,
-    design_modes: list[str] = DEFAULT_DESIGN_MODES,
+    design_modes: list[str] = ["bright", "dark"],
 ):
     """Creates a mock ToO catalogue.
 
