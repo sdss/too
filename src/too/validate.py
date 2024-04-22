@@ -173,7 +173,7 @@ class DesignMode:
 
     def __init__(self, database: PeeweeDatabaseConnection, label: str | None = None):
 
-        self.database = database
+        DesignModeDB._meta.database(database)  # type:ignore
 
         if label is not None:
             self.fromdb(label=label)
@@ -191,8 +191,6 @@ class DesignMode:
         """
 
         self.desmode_label = label
-
-        DesignModeDB._meta.database(DesignModeDB)  # type:ignore
 
         desmode = DesignModeDB.select().where(DesignModeDB.label == label)[0]
 
@@ -348,14 +346,14 @@ def calculate_offsets(
     magnitudes = magnitude_array(targets)
 
     # add in the missing 2MASS mags as nan
-    magnitudes = np.column_stack(
-        (
-            magnitudes,
-            np.zeros(len(targets)) + np.nan,
-            targets["h_mag"],
-            np.zeros(len(targets)) + np.nan,
-        )
-    )
+    # magnitudes = np.column_stack(
+    #     (
+    #         magnitudes,
+    #         np.zeros(len(targets)) + np.nan,
+    #         targets["h_mag"],
+    #         np.zeros(len(targets)) + np.nan,
+    #     )
+    # )
 
     ev_boss = targets["fiber_type"] == "BOSS"
     res = object_offset(
@@ -392,9 +390,9 @@ def calculate_offsets(
 
 
 def bn_validation(
-    database: PeeweeDatabaseConnection,
     targets: polars.DataFrame,
     design_mode: str,
+    modes: dict,
     observatory: str = "APO",
 ) -> np.ndarray:
     """
@@ -408,15 +406,12 @@ def bn_validation(
 
     Parameters
     ----------
-    database : PeeweeDatabaseConnection
-        The database connection to use to query the design modes.
-
     targets: polars.DataFrame
         DataFrame with the ToO target information
-
     design_mode: str
         The design_mode to run the validation for
-
+    modes : dict
+        A dictionary of design mode to ``DesignMode`` object.
     observatory: str
         Observatory where observation is taking place, either
         'LCO' or 'APO'.
@@ -455,7 +450,7 @@ def bn_validation(
     delta_ra, delta_dec, _ = calculate_offsets(
         targets,
         design_mode,
-        modes=allDesignModes(database),
+        modes=modes,
         observatory=observatory,
     )
     # get the new ra and dec
@@ -471,10 +466,10 @@ def bn_validation(
     pmdec = targets["pmdec"].to_numpy()
     epoch = targets["epoch"].to_numpy()
     # deal with nulls
-    ev_pm_null = np.isnan(pmra)
+    ev_pm_null = np.isnan(pmra) | np.isnan(pmdec)
     pmra[ev_pm_null] = 0.0
     pmdec[ev_pm_null] = 0.0
-    epoch[ev_pm_null] = 2016.0
+    epoch[np.isnan(epoch)] = 2016.0
     # get the indicies for all targets
     coord = SkyCoord(
         ra=ra_off * u.deg,
@@ -484,6 +479,8 @@ def bn_validation(
         obstime=Time(epoch, format="decimalyear"),
     ).apply_space_motion(Time.now())
     hp_inds = hp.skycoord_to_healpix(coord)
+
+    assert isinstance(hp_inds, np.ndarray)
 
     # check if ToOs in bright neighbor healpixels
     valid_too_bn = np.zeros(len(targets), dtype=bool) + True
@@ -553,9 +550,9 @@ def mag_limit_check(
 
 
 def mag_lim_validation(
-    database: PeeweeDatabaseConnection,
     targets: polars.DataFrame,
     design_mode: str,
+    modes: dict,
     observatory: str = "APO",
 ) -> np.ndarray:
     """
@@ -566,6 +563,8 @@ def mag_lim_validation(
         DataFrame with the ToO target information
     design_mode: str
         The design_mode to run the validation for
+    modes : dict
+        A dictionary of design mode to ``DesignMode`` object.
     observatory: str
         Observatory where observation is taking place, either
         'LCO' or 'APO'.
@@ -579,8 +578,6 @@ def mag_lim_validation(
 
     # get the magnitude array
     magnitudes = magnitude_array(targets)
-
-    modes = allDesignModes(database)
 
     # get offset flags
     # calculate the offsets
@@ -602,7 +599,7 @@ def mag_lim_validation(
 
     # do check for APOGEE
     ev_apogee = targets["fiber_type"] == "APOGEE"
-    valid_too_mag_lim[ev_boss] = mag_limit_check(
+    valid_too_mag_lim[ev_apogee] = mag_limit_check(
         magnitudes[ev_apogee, :],
         targets["can_offset"].to_numpy()[ev_apogee],
         offset_flag[ev_apogee],
