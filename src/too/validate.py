@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import collections
 import os
-import pickle
 
 from typing import TYPE_CHECKING, Tuple
 
@@ -424,24 +423,23 @@ def bn_validation(
 
     """
 
-    # load the healpix indicies for the designmode
-    bn_maps_boss_file = "{BN_HEALPIX}/{design_mode}_{instrument}_bn_healpix.pkl".format(
-        BN_HEALPIX=BN_HEALPIX,
-        instrument="boss",
-        design_mode=design_mode,
-    )
-    with open(bn_maps_boss_file, "rb") as f:
-        bn_maps_boss = pickle.load(f)
+    BN_HEALPIX = os.getenv("BN_HEALPIX")
+    if BN_HEALPIX is None:
+        raise ValueError("Environment variable BN_HEALPIX not set.")
 
-    bn_maps_apogee_file = (
-        "{BN_HEALPIX}/{design_mode}_{instrument}_bn_healpix.pkl".format(
-            BN_HEALPIX=BN_HEALPIX,
-            instrument="apogee",
-            design_mode=design_mode,
-        )
-    )
-    with open(bn_maps_apogee_file, "rb") as f:
-        bn_maps_apogee = pickle.load(f)
+    if not os.path.exists(BN_HEALPIX):
+        raise ValueError(f"Path $BN_HEALPIX={BN_HEALPIX} does not exist.")
+
+    # load the healpix indicies for the designmode
+    bn_maps_boss_file = f"{BN_HEALPIX}/{design_mode}_boss_bn_healpix.parquet"
+    if not os.path.exists(bn_maps_boss_file):
+        raise ValueError(f"File {bn_maps_boss_file} does not exist.")
+    bn_maps_boss = polars.scan_parquet(bn_maps_boss_file)
+
+    bn_maps_apogee_file = f"{BN_HEALPIX}/{design_mode}_apogee_bn_healpix.parquet"
+    if not os.path.exists(bn_maps_apogee_file):
+        raise ValueError(f"File {bn_maps_apogee_file} does not exist.")
+    bn_maps_apogee = polars.scan_parquet(bn_maps_apogee_file)
 
     # create the correct nside healpix object
     hp = HEALPix(nside=2**18, order="ring", frame="icrs")
@@ -486,13 +484,19 @@ def bn_validation(
     valid_too_bn = np.zeros(len(targets), dtype=bool) + True
 
     ev_boss = targets["fiber_type"] == "BOSS"
-    # oppisite as True == valid target
-    valid_too_bn[ev_boss] = ~np.isin(hp_inds[ev_boss], bn_maps_boss)  # type: ignore
-    # in future, is there faster way to do this? would using sets be better?
-
     ev_apogee = targets["fiber_type"] == "APOGEE"
-    # oppisite as True == valid target
-    valid_too_bn[ev_apogee] = ~np.isin(hp_inds[ev_apogee], bn_maps_apogee)  # type: ignore
+
+    hp_inds_boss = hp_inds[ev_boss]
+    hp_inds_apogee = hp_inds[ev_apogee]
+
+    # Get bright healpixels that are in our target list.
+    invalid_hp_boss = bn_maps_boss.filter(polars.col.data.is_in(hp_inds_boss))
+    invalid_hp_apogee = bn_maps_apogee.filter(polars.col.data.is_in(hp_inds_apogee))
+
+    # opposite as True == valid target
+    valid_too_bn[ev_boss] = ~np.isin(hp_inds[ev_boss], invalid_hp_boss.collect())
+    valid_too_bn[ev_apogee] = ~np.isin(hp_inds[ev_apogee], invalid_hp_apogee.collect())
+
     return valid_too_bn
 
 
