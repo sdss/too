@@ -72,7 +72,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pip install pytest pytest-sugar pytest-cov coverage
+          pip install pytest pytest-sugar pytest-cov coverage pytest-mock
           pytest tests/
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
