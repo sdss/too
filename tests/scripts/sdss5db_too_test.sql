@@ -272,6 +272,21 @@ CREATE TABLE targetdb.design_mode (
     apogee_sky_neighbors_targets DOUBLE PRECISION[]
 );
 
+CREATE TABLE targetdb.field (
+    pk SERIAL PRIMARY KEY NOT NULL,
+    field_id INTEGER,
+    racen DOUBLE PRECISION NOT NULL,
+    deccen DOUBLE PRECISION NOT NULL,
+    position_angle REAL,
+    slots_exposures INTEGER[][],
+    version_pk INTEGER,
+    cadence_pk INTEGER,
+    observatory_pk INTEGER);
+
+CREATE TABLE targetdb.observatory (
+    pk SERIAL PRIMARY KEY NOT NULL,
+    label TEXT NOT NULL);
+
 \copy catalogdb.catalog FROM PROGRAM '/usr/bin/gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
@@ -280,6 +295,7 @@ CREATE TABLE targetdb.design_mode (
 \copy catalogdb.gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
 -- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM '/usr/bin/gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
 \copy catalogdb.twomass_psc FROM PROGRAM '/usr/bin/gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
+\copy targetdb.field FROM PROGRAM '/usr/bin/gzip -dc targetdb_field.csv.gz' WITH CSV HEADER;
 \copy targetdb.design_mode FROM 'design_mode.csv' WITH CSV HEADER;
 
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
@@ -298,6 +314,10 @@ ALTER TABLE catalogdb.twomass_psc ADD PRIMARY KEY (pts_key);
 -- ALTER TABLE ONLY catalogdb.too_target
 --     ADD CONSTRAINT twomass_pts_key_fk
 --     FOREIGN KEY (twomass_pts_key) REFERENCES catalogdb.twomass_psc(pts_key);
+
+ALTER TABLE ONLY targetdb.field
+    ADD CONSTRAINT observatory_fk
+    FOREIGN KEY (observatory_pk) REFERENCES targetdb.observatory(pk);
 
 CREATE INDEX ON catalogdb.catalog (version_id);
 CREATE INDEX ON catalogdb.catalog (q3c_ang2ipix(ra, dec));
@@ -347,9 +367,14 @@ CREATE INDEX ON targetdb.cadence(nepochs int4_ops);
 
 CREATE UNIQUE INDEX ON targetdb.design_mode(label);
 
+CREATE INDEX CONCURRENTLY ON targetdb.field (q3c_ang2ipix(ra, dec));
+CREATE INDEX CONCURRENTLY ON targetdb.field USING BTREE(field_id);
+CREATE INDEX CONCURRENTLY ON targetdb.field USING BTREE(observatory_pk);
+
 INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}', '{1}', '{0}', 1, null, 'bright_1x1');
 INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
+INSERT INTO targetdb.observatory VALUES (0, 'APO'), (1, 'LCO');
 
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;

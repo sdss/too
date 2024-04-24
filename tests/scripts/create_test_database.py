@@ -79,6 +79,7 @@ def create_test_database(
         # "sdss_dr13_photoobj.csv.gz",
         "gaia_dr3_source.csv.gz",
         "twomass_psc.csv.gz",
+        "targetdb_field.csv.gz",
     ]
     for file in files:
         if not (CACHE_PATH / file).exists():
