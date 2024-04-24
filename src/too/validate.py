@@ -344,16 +344,6 @@ def calculate_offsets(
 
     magnitudes = magnitude_array(targets)
 
-    # add in the missing 2MASS mags as nan
-    # magnitudes = np.column_stack(
-    #     (
-    #         magnitudes,
-    #         np.zeros(len(targets)) + np.nan,
-    #         targets["h_mag"],
-    #         np.zeros(len(targets)) + np.nan,
-    #     )
-    # )
-
     ev_boss = targets["fiber_type"] == "BOSS"
     res = object_offset(
         magnitudes[ev_boss, :],
