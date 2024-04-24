@@ -61,7 +61,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade wheel pip setuptools
-          pip install .
+          pip install -e .
 
       - name: Populate database
         run: |
