@@ -37,6 +37,13 @@ def max_cid():
     yield catalogdb.Catalog.select(peewee.fn.MAX(catalogdb.Catalog.catalogid)).scalar()
 
 
+@pytest.fixture(autouse=True)
+def envvars(monkeypatch: pytest.MonkeyPatch):
+    """Sets the environment variables."""
+
+    monkeypatch.setenv("RS_VERSION", "eta-6")
+
+
 @pytest.fixture(autouse=True, scope="module")
 def connect_and_revert_database(max_cid: int):
     """Reverts the database to the original state."""

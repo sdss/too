@@ -30,6 +30,7 @@ from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
 from too import log
 from too.datamodel import mag_columns, too_dtypes
 from too.exceptions import ValidationError
+from too.tools import match_fields
 
 
 if TYPE_CHECKING:
@@ -736,6 +737,9 @@ def validate_bright_limits(
 
     targets = targets.clone()
 
+    # Get the field/observatory for each tile.
+    targets = match_fields(targets, database)
+
     # Check that the sky_brightness_mode value are valid.
     valid_brightness_modes = ["bright", "dark"]
 
@@ -751,54 +755,61 @@ def validate_bright_limits(
     # List of validated targets for each brightness mode.
     targets_bmode_validated: list[polars.DataFrame] = []
 
-    # First we split the targets by sky_brightness_mode (bright or dark). Then
-    # we run the check for all the design modes that match that brightness mode.
-    # We do not reject targets here but we mark if they pass the bright neighbour
+    # First we split the targets by observatory and sky_brightness_mode (bright or
+    # dark). Then we run the check for all the design modes that match that brightness
+    # mode. We do not reject targets here but we mark if they pass the bright neighbour
     # and magnitude limit checks.
-    for bmode in valid_brightness_modes:
-        targets_bmode = targets.filter(polars.col.sky_brightness_mode == bmode)
-        design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
+    for observatory in ["APO", "LCO"]:
+        for bmode in valid_brightness_modes:
+            targets_bmode = targets.filter(
+                (polars.col.sky_brightness_mode == bmode)
+                & (polars.col.observatory == observatory)
+            )
 
-        valid_bn: list[numpy.ndarray] = []
-        valid_mag_lim: list[numpy.ndarray] = []
+            design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
 
-        for dmb in design_modes_bmode:
-            log.debug(f"Validating bright neighbours for design mode: {dmb}")
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=ErfaWarning)
+            valid_bn: list[numpy.ndarray] = []
+            valid_mag_lim: list[numpy.ndarray] = []
 
-                    valid_bn.append(
-                        bn_validation(
-                            targets_bmode,
-                            dmb,
-                            design_modes,
-                            observatory="APO",
+            for dmb in design_modes_bmode:
+                log.debug(f"Validating bright neighbours for design mode: {dmb}")
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", category=ErfaWarning)
+
+                        valid_bn.append(
+                            bn_validation(
+                                targets_bmode,
+                                dmb,
+                                design_modes,
+                                observatory=observatory,
+                            )
                         )
+
+                        valid_mag_lim.append(
+                            mag_lim_validation(
+                                targets_bmode,
+                                dmb,
+                                design_modes,
+                                observatory=observatory,
+                            )
+                        )
+
+                except Exception as err:
+                    log.warning(
+                        f"Error validating targets for design mode {dmb!r}: {err}"
                     )
 
-                    valid_mag_lim.append(
-                        mag_lim_validation(
-                            targets_bmode,
-                            dmb,
-                            design_modes,
-                            observatory="APO",
-                        )
-                    )
+            if len(valid_bn) == 0 or len(valid_mag_lim) == 0:
+                raise ValidationError("Error validating magnitude limits.")
 
-            except Exception as err:
-                log.warning(f"Error validating targets for design mode {dmb!r}: {err}")
+            valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
+            valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
 
-        if len(valid_bn) == 0 or len(valid_mag_lim) == 0:
-            raise ValidationError("Error validating magnitude limits.")
-
-        valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
-        valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
-
-        targets_bmode = targets_bmode.with_columns(
-            bn_valid=polars.Series(valid_bn_1d),
-            mag_lim_valid=polars.Series(valid_mag_lim_1d),
-        )
-        targets_bmode_validated.append(targets_bmode)
+            targets_bmode = targets_bmode.with_columns(
+                bn_valid=polars.Series(valid_bn_1d),
+                mag_lim_valid=polars.Series(valid_mag_lim_1d),
+            )
+            targets_bmode_validated.append(targets_bmode)
 
     return polars.concat(targets_bmode_validated)

@@ -128,7 +128,12 @@ def match_fields(
         if rs_version is None:
             raise ValueError("No rs_version provided and $RS_VERSION not set.")
 
-    too_sc = SkyCoord(ra=targets["ra"], dec=targets["dec"], unit="deg", frame="icrs")
+    too_sc = SkyCoord(
+        ra=targets["ra"].to_numpy(),
+        dec=targets["dec"].to_numpy(),
+        unit="deg",
+        frame="icrs",
+    )
 
     fields = polars.read_database(
         "SELECT f.field_id, f.racen AS field_ra, "
@@ -140,9 +145,12 @@ def match_fields(
         database,
     )
 
+    if len(fields) == 0:
+        raise ValueError(f"No fields found for rs_version={rs_version!r}")
+
     fields_sc = SkyCoord(
-        ra=fields["field_ra"],
-        dec=fields["field_dec"],
+        ra=fields["field_ra"].to_numpy(),
+        dec=fields["field_dec"].to_numpy(),
         unit="deg",
         frame="icrs",
     )
