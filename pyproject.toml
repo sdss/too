@@ -77,7 +77,7 @@ branch = true
 include = ["src/too/*"]
 omit = [
     "*/__init__.py",
-    "src/too/validate.py"
+    "*/validate.py"
 ]
 
 [tool.coverage.report]
