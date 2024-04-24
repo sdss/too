@@ -10,22 +10,33 @@ from __future__ import annotations
 
 import collections
 import os
+import warnings
 
 from typing import TYPE_CHECKING, Tuple
 
 import astropy.units as u
+import numpy
 import numpy as np
 import polars
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from astropy_healpix import HEALPix
+from erfa import ErfaWarning
 
 from coordio.utils import Moffat2dInterp, _offset_radec, object_offset
+from sdssdb.connection import PeeweeDatabaseConnection
 from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
+
+from too import log
+from too.datamodel import mag_columns, too_dtypes
+from too.exceptions import ValidationError
 
 
 if TYPE_CHECKING:
     from sdssdb import PeeweeDatabaseConnection
+
+
+__all__ = ["validate_too_targets", "validate_bright_limits"]
 
 
 # load enviornment variable with path to healpix maps
@@ -600,3 +611,194 @@ def mag_lim_validation(
         modes[design_mode].bright_limit_targets["APOGEE"],
     )
     return valid_too_mag_lim
+
+
+def validate_too_targets(
+    targets: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    drop_bright_targets: bool = False,
+):
+    """Validates a list of ToO targets.
+
+    Checks the following conditions:
+
+    - The dataframe schema matches the ``too_target`` schema.
+    - The ``too_id`` column is unique.
+    - ``ra`` and ``dec`` are present and valid.
+    - At least one of the magnitude columns is present.
+    - The number of exposures is set and valid.
+    - The ``active`` column is set.
+
+    """
+
+    n_targets = targets.height
+
+    if targets.schema != too_dtypes:
+        raise ValidationError("Invalid schema for ToO targets.")
+
+    if targets.unique("too_id").height != n_targets:
+        raise ValidationError("Duplicate too_id in ToO targets.")
+
+    targets_coords = targets.select(["ra", "dec"]).drop_nulls()
+    if len(targets_coords) < n_targets:
+        raise ValidationError("Null ra/dec found in ToO targets.")
+
+    bad_ra = (targets_coords["ra"] >= 360) | (targets_coords["ra"] < 0)
+    bad_dec = (targets_coords["dec"] >= 90) | (targets_coords["dec"] <= -90)
+    if bad_ra.any() or bad_dec.any():
+        raise ValidationError("Invalid ra or dec found in ToO targets.")
+
+    if targets["n_exposures"].is_null().any():
+        raise ValidationError("Null 'n_exposures' column values found in ToO targets.")
+
+    if targets["active"].is_null().any():
+        raise ValidationError("Null 'active' column values found in ToO targets.")
+
+    # Get magnitude columns and filted rows that do not have any value set.
+    # This is equivalent to Pandas .drop(axis=1). In Polars is a bit harder. See
+    # https://github.com/pola-rs/polars/issues/1613
+    mag_data = targets[mag_columns]
+    any_mags = mag_data.filter(
+        ~polars.fold(
+            True,
+            lambda acc, s: acc & s.is_null(),
+            polars.all(),
+        )
+    )
+    if len(any_mags) < n_targets:
+        raise ValidationError(
+            "ToOs found with missing magnitudes. "
+            "At least one magnitude value is required."
+        )
+
+    # Check that if one of the Sloan magnitudes is set, all are set.
+    sloan_mags = targets.select(polars.col("^[ugriz]_mag$"))
+    # Rows where at least one value is not null.
+    sloan_mags_not_null = sloan_mags.filter(
+        polars.fold(False, lambda a, b: a | b.is_not_null(), polars.all())
+    )
+    # Rows where at least one value is null.
+    sloan_mags_null = sloan_mags_not_null.filter(
+        polars.fold(False, lambda a, b: a | b.is_null(), polars.all())
+    )
+    if sloan_mags_null.height > 0:
+        raise ValidationError("Found rows with incomplete Sloan magnitudes.")
+
+    if set(targets["fiber_type"].unique()) != set(["APOGEE", "BOSS"]):
+        raise ValidationError(
+            "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."
+        )
+
+    # Check can_offset is a boolean and is set.
+    if targets["can_offset"].is_null().any():
+        raise ValidationError("Null 'can_offset' column values found in ToO targets.")
+
+    # Validate magnitude limits and bright neighbours.
+    log.info("Running bright neighbour and magnitude limit checks.")
+    bn_targets = validate_bright_limits(targets, database)
+
+    # Require both checks to pass.
+    bn_invalid = bn_targets.filter(~polars.col.bn_valid | ~polars.col.mag_lim_valid)
+
+    if len(bn_invalid) > 0:
+        if not drop_bright_targets:
+            raise ValidationError(
+                f"{len(bn_invalid)} targets failed bright neighbour or "
+                "magnitude limit checks."
+            )
+        else:
+            log.warning(
+                f"{len(bn_invalid)} targets failed bright neighbour or "
+                "magnitude limit checks and will be rejected."
+            )
+        targets = targets.filter(~polars.col.too_id.is_in(bn_invalid["too_id"]))
+
+    # Fill some optional columns.
+    targets = targets.with_columns(
+        active=polars.col.active.fill_null(True),
+        inertial=polars.col.inertial.fill_null(False),
+        observed=polars.col.observed.fill_null(False),
+        optical_prov=polars.col.optical_prov.fill_null(""),
+        delta_ra=polars.col.delta_ra.fill_null(polars.lit(0, dtype=polars.Float32)),
+        delta_dec=polars.col.delta_dec.fill_null(polars.lit(0, dtype=polars.Float32)),
+        n_exposures=polars.col.n_exposures.fill_null(polars.lit(1, dtype=polars.Int16)),
+        priority=polars.col.priority.fill_null(polars.lit(5, dtype=polars.Int16)),
+    )
+
+    return targets
+
+
+def validate_bright_limits(
+    targets: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+):
+    """Runs the Mugatu-like validation for bright targets."""
+
+    targets = targets.clone()
+
+    # Check that the sky_brightness_mode value are valid.
+    valid_brightness_modes = ["bright", "dark"]
+
+    targets_invalid_brightness_mode = targets.filter(
+        polars.col.sky_brightness_mode.is_in(valid_brightness_modes).not_()
+    )
+    if len(targets_invalid_brightness_mode) > 0:
+        raise ValidationError("Invalid sky_brightness_mode values found.")
+
+    # Get a list of design modes.
+    design_modes: dict[str, DesignMode] = allDesignModes(database)
+
+    # List of validated targets for each brightness mode.
+    targets_bmode_validated: list[polars.DataFrame] = []
+
+    # First we split the targets by sky_brightness_mode (bright or dark). Then
+    # we run the check for all the design modes that match that brightness mode.
+    # We do not reject targets here but we mark if they pass the bright neighbour
+    # and magnitude limit checks.
+    for bmode in valid_brightness_modes:
+        targets_bmode = targets.filter(polars.col.sky_brightness_mode == bmode)
+        design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
+
+        valid_bn: list[numpy.ndarray] = []
+        valid_mag_lim: list[numpy.ndarray] = []
+
+        for dmb in design_modes_bmode:
+            log.debug(f"Validating bright neighbours for design mode: {dmb}")
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=ErfaWarning)
+
+                    valid_bn.append(
+                        bn_validation(
+                            targets_bmode,
+                            dmb,
+                            design_modes,
+                            observatory="APO",
+                        )
+                    )
+
+                    valid_mag_lim.append(
+                        mag_lim_validation(
+                            targets_bmode,
+                            dmb,
+                            design_modes,
+                            observatory="APO",
+                        )
+                    )
+
+            except Exception as err:
+                log.warning(f"Error validating targets for design mode {dmb!r}: {err}")
+
+        if len(valid_bn) == 0 or len(valid_mag_lim) == 0:
+            raise ValidationError("Error validating magnitude limits.")
+
+        valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
+        valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
+
+        targets_bmode = targets_bmode.with_columns(
+            bn_valid=polars.Series(valid_bn_1d),
+            mag_lim_valid=polars.Series(valid_mag_lim_1d),
+        )
+        targets_bmode_validated.append(targets_bmode)
+
+    return polars.concat(targets_bmode_validated)

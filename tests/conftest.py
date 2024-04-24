@@ -18,7 +18,7 @@ import pytest_mock
 
 from sdssdb.peewee.sdss5db import catalogdb
 
-import too.database
+import too.validate
 from too.database import connect_to_database
 from too.mock import create_mock_too_catalogue
 
@@ -75,8 +75,8 @@ def mock_bn_validation(mocker: pytest_mock.MockerFixture):
     def mock_bn_mag_lim(bn_targets, *args, **kargs):
         return numpy.ones(len(bn_targets), dtype=bool)
 
-    mocker.patch.object(too.database, "bn_validation", side_effect=mock_bn_mag_lim)
-    mocker.patch.object(too.database, "mag_lim_validation", side_effect=mock_bn_mag_lim)
+    mocker.patch.object(too.validate, "bn_validation", side_effect=mock_bn_mag_lim)
+    mocker.patch.object(too.validate, "mag_lim_validation", side_effect=mock_bn_mag_lim)
 
 
 @pytest.fixture()
