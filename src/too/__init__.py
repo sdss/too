@@ -39,4 +39,5 @@ from .database import *
 from .datamodel import *
 from .mock import *
 from .tools import *
+from .validate import *
 from .xmatch import *

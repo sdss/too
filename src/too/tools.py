@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import shutil
 import tempfile
@@ -17,17 +18,20 @@ from typing import TYPE_CHECKING
 import httpx
 import polars
 import rich.progress
+from astropy.coordinates import SkyCoord, match_coordinates_sky
+
+from coordio.defaults import APO_MAX_FIELD_R, LCO_MAX_FIELD_R
 
 from too.datamodel import too_dtypes
 
 
 if TYPE_CHECKING:
-    import os
-
     import rich.console
 
+    from sdssdb.connection import PeeweeDatabaseConnection
 
-__all__ = ["download_file", "read_too_file"]
+
+__all__ = ["download_file", "read_too_file", "match_fields"]
 
 
 def read_too_file(path: polars.DataFrame | pathlib.Path | str) -> polars.DataFrame:
@@ -86,3 +90,77 @@ def download_file(
 
         download_file.flush()
         shutil.move(download_file.name, path / pathlib.Path(url).name)
+
+
+def match_fields(
+    targets: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    rs_version: str | None = None,
+    check_separation: bool = False,
+) -> polars.DataFrame:
+    """Matches a list of targets with their fields and observatories.
+
+    Parameters
+    ----------
+    targets
+        The data frame of targets. It must include fully populated ``ra`` and
+        ``dec`` columns.
+    database
+        The database connection.
+    rs_version
+        The robostrategy plan to use to select fields. Defaults to the
+        value of the ``$RS_VERSION`` environment variable.
+    check_separation
+        If ``True``, checks that the separation between the target and the
+        field centre is less than the FPS FoV.
+
+    Returns
+    -------
+    dataframe
+        The input dataframe with ``field_id`` and ``observatory`` columns.
+
+    """
+
+    targets = targets.clone()
+
+    if rs_version is None:
+        rs_version = os.environ.get("RS_VERSION", None)
+        if rs_version is None:
+            raise ValueError("No rs_version provided and $RS_VERSION not set.")
+
+    too_sc = SkyCoord(ra=targets["ra"], dec=targets["dec"], unit="deg", frame="icrs")
+
+    fields = polars.read_database(
+        "SELECT f.field_id, f.racen AS field_ra, "
+        "       f.deccen AS field_dec, o.label AS observatory "
+        "FROM targetdb.field f "
+        "JOIN targetdb.version v ON f.version_pk = v.pk "
+        "JOIN targetdb.observatory o ON o.pk = f.observatory_pk "
+        f"WHERE v.plan = '{rs_version}' AND v.robostrategy;",
+        database,
+    )
+
+    fields_sc = SkyCoord(
+        ra=fields["field_ra"],
+        dec=fields["field_dec"],
+        unit="deg",
+        frame="icrs",
+    )
+
+    field_idx, sep2d, _ = match_coordinates_sky(too_sc, fields_sc)
+
+    field_to_target = fields[field_idx]
+    field_to_target = field_to_target.with_columns(field_separation=sep2d.deg)
+
+    targets = targets.hstack(field_to_target)
+
+    if check_separation:
+        for obs, max_field_r in [("APO", APO_MAX_FIELD_R), ("LCO", LCO_MAX_FIELD_R)]:
+            obs_targets = targets.filter(polars.col.observatory == obs)
+            if (obs_targets["field_separation"] > max_field_r).any():
+                raise ValueError(
+                    f"Targets with separation larger than {max_field_r} deg "
+                    f"found for observatory {obs}."
+                )
+
+    return targets

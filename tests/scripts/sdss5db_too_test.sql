@@ -278,7 +278,8 @@ CREATE TABLE targetdb.field (
     racen DOUBLE PRECISION NOT NULL,
     deccen DOUBLE PRECISION NOT NULL,
     position_angle REAL,
-    observatory_pk INTEGER);
+    observatory_pk INTEGER,
+    version_pk INTEGER);
 
 CREATE TABLE targetdb.observatory (
     pk SERIAL PRIMARY KEY NOT NULL,
@@ -304,6 +305,9 @@ ALTER TABLE catalogdb.twomass_psc ADD PRIMARY KEY (pts_key);
 ALTER TABLE ONLY targetdb.field
     ADD CONSTRAINT observatory_fk
     FOREIGN KEY (observatory_pk) REFERENCES targetdb.observatory(pk);
+ALTER TABLE ONLY targetdb.field
+    ADD CONSTRAINT version_fk
+    FOREIGN KEY (version_pk) REFERENCES targetdb.version(pk);
 
 CREATE INDEX ON catalogdb.catalog (version_id);
 CREATE INDEX ON catalogdb.catalog (q3c_ang2ipix(ra, dec));
@@ -356,6 +360,9 @@ CREATE UNIQUE INDEX ON targetdb.design_mode(label);
 CREATE INDEX CONCURRENTLY ON targetdb.field (q3c_ang2ipix(racen, deccen));
 CREATE INDEX CONCURRENTLY ON targetdb.field USING BTREE(field_id);
 CREATE INDEX CONCURRENTLY ON targetdb.field USING BTREE(observatory_pk);
+CREATE INDEX CONCURRENTLY ON targetdb.field USING BTREE(version_pk);
+
+CREATE INDEX CONCURRENTLY ON targetdb.version USING BTREE(plan);
 
 INSERT INTO catalogdb.version VALUES (31, '1.0.0', '1.0.0');
 INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}', '{1}', '{0}', 1, null, 'bright_1x1');
@@ -370,6 +377,7 @@ INSERT INTO targetdb.observatory VALUES (0, 'APO'), (1, 'LCO');
 \copy catalogdb.gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc gaia_dr3_source.csv.gz' WITH CSV HEADER;
 -- \copy catalogdb.sdss_dr13_photoobj FROM PROGRAM '/usr/bin/gzip -dc sdss_dr13_photoobj.csv.gz' WITH CSV HEADER;
 \copy catalogdb.twomass_psc FROM PROGRAM '/usr/bin/gzip -dc twomass_psc.csv.gz' WITH CSV HEADER;
+\copy targetdb.version FROM PROGRAM '/usr/bin/gzip -dc targetdb_version.csv.gz' WITH CSV HEADER;
 \copy targetdb.field FROM PROGRAM '/usr/bin/gzip -dc targetdb_field.csv.gz' WITH CSV HEADER;
 \copy targetdb.design_mode FROM 'design_mode.csv' WITH CSV HEADER;
 
@@ -387,4 +395,6 @@ VACUUM ANALYZE targetdb.carton;
 VACUUM ANALYZE targetdb.carton_to_target;
 VACUUM ANALYZE targetdb.category;
 VACUUM ANALYZE targetdb.version;
+VACUUM ANALYZE targetdb.observatory;
+VACUUM ANALYZE targetdb.field;
 VACUUM ANALYZE targetdb.magnitude;
