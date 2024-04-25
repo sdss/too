@@ -83,7 +83,6 @@ def mock_bn_validation(mocker: pytest_mock.MockerFixture):
         return numpy.ones(len(bn_targets), dtype=bool)
 
     mocker.patch.object(too.validate, "bn_validation", side_effect=mock_bn_mag_lim)
-    mocker.patch.object(too.validate, "mag_lim_validation", side_effect=mock_bn_mag_lim)
 
 
 @pytest.fixture()

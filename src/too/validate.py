@@ -15,7 +15,6 @@ import warnings
 from typing import TYPE_CHECKING, Tuple
 
 import astropy.units as u
-import numpy
 import numpy as np
 import polars
 from astropy.coordinates import SkyCoord
@@ -37,7 +36,7 @@ if TYPE_CHECKING:
     from sdssdb import PeeweeDatabaseConnection
 
 
-__all__ = ["validate_too_targets", "validate_bright_limits"]
+__all__ = ["validate_too_targets", "add_bright_limits_columns"]
 
 
 # load enviornment variable with path to healpix maps
@@ -47,7 +46,11 @@ BN_HEALPIX = os.getenv("BN_HEALPIX")
 fmagloss = Moffat2dInterp()
 
 
-def check_assign_mag_limit(mag_metric_min, mag_metric_max, assign_mag):
+def check_assign_mag_limit(
+    mag_metric_min,
+    mag_metric_max,
+    assign_mag,
+):  # pragma: no cover
     """
     Checks the if magnitude of one assignment agrees with
     design mode for some instrument and carton class
@@ -263,7 +266,7 @@ class DesignMode:
         return
 
 
-def magnitude_array(targets: polars.DataFrame) -> np.ndarray:
+def magnitude_array(targets: polars.DataFrame) -> np.ndarray:  # pragma: no cover
     """
     create the magnitude array for the targets
     Parameters
@@ -310,7 +313,7 @@ def calculate_offsets(
     modes: dict,
     offset_min_skybrightness: float = 0.0,
     observatory: str = "APO",
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # pragma: no cover
     """
     Calculate the offsets for the targets
 
@@ -395,7 +398,7 @@ def bn_validation(
     design_mode: str,
     modes: dict,
     observatory: str = "APO",
-) -> np.ndarray:
+) -> np.ndarray:  # pragma: no cover
     """
     Validate a ToO to see if it is too close
     to a bright neighbor. This functionm relies on the
@@ -435,12 +438,12 @@ def bn_validation(
     # load the healpix indicies for the designmode
     bn_maps_boss_file = f"{BN_HEALPIX}/{design_mode}_boss_bn_healpix.parquet"
     if not os.path.exists(bn_maps_boss_file):
-        raise ValueError(f"File {bn_maps_boss_file} does not exist.")
+        raise FileNotFoundError(f"File {bn_maps_boss_file} does not exist.")
     bn_maps_boss = polars.scan_parquet(bn_maps_boss_file)
 
     bn_maps_apogee_file = f"{BN_HEALPIX}/{design_mode}_apogee_bn_healpix.parquet"
     if not os.path.exists(bn_maps_apogee_file):
-        raise ValueError(f"File {bn_maps_apogee_file} does not exist.")
+        raise FileNotFoundError(f"File {bn_maps_apogee_file} does not exist.")
     bn_maps_apogee = polars.scan_parquet(bn_maps_apogee_file)
 
     # create the correct nside healpix object
@@ -617,7 +620,7 @@ def mag_lim_validation(
 def validate_too_targets(
     targets: polars.DataFrame,
     database: PeeweeDatabaseConnection,
-    drop_bright_targets: bool = False,
+    bright_limit_checks: bool = False,
 ):
     """Validates a list of ToO targets.
 
@@ -629,6 +632,10 @@ def validate_too_targets(
     - At least one of the magnitude columns is present.
     - The number of exposures is set and valid.
     - The ``active`` column is set.
+
+    If ``bright_limit_checks`` is ``True``, the function will also run the bright
+    neighbour and bright limit checks and will fail if any of the targets do not pass
+    the checks.
 
     """
 
@@ -694,25 +701,32 @@ def validate_too_targets(
     if targets["can_offset"].is_null().any():
         raise ValidationError("Null 'can_offset' column values found in ToO targets.")
 
-    # Validate magnitude limits and bright neighbours.
-    log.info("Running bright neighbour and magnitude limit checks.")
-    bn_targets = validate_bright_limits(targets, database)
+    # Check that the sky_brightness_mode value are valid.
+    valid_brightness_modes = ["bright", "dark"]
 
-    # Require both checks to pass.
-    bn_invalid = bn_targets.filter(~polars.col.bn_valid | ~polars.col.mag_lim_valid)
+    targets_invalid_brightness_mode = targets.filter(
+        polars.col.sky_brightness_mode.is_in(valid_brightness_modes).not_()
+    )
+    if len(targets_invalid_brightness_mode) > 0:
+        raise ValidationError("Invalid sky_brightness_mode values found.")
 
-    if len(bn_invalid) > 0:
-        if not drop_bright_targets:
+    if bright_limit_checks:
+        # Validate magnitude limits and bright neighbours.
+        log.info("Running bright neighbour and magnitude limit checks.")
+        bn_targets = add_bright_limits_columns(targets, database)
+
+        # Check if any targets failed the bright neighbour or magnitude limit checks.
+        bn_columns = bn_targets.select(polars.selectors.starts_with("bn_"))
+        bn_invalid = bn_targets.filter(~bn_columns.fold(lambda x, y: x & y))
+
+        mag_lim_columns = bn_targets.select(polars.selectors.starts_with("mag_lim_"))
+        mag_lim_invalid = bn_targets.filter(~mag_lim_columns.fold(lambda x, y: x & y))
+
+        if len(bn_invalid) > 0 or len(mag_lim_invalid) > 0:
             raise ValidationError(
                 f"{len(bn_invalid)} targets failed bright neighbour or "
                 "magnitude limit checks."
             )
-        else:
-            log.warning(
-                f"{len(bn_invalid)} targets failed bright neighbour or "
-                "magnitude limit checks and will be rejected."
-            )
-        targets = targets.filter(~polars.col.too_id.is_in(bn_invalid["too_id"]))
 
     # Fill some optional columns.
     targets = targets.with_columns(
@@ -729,11 +743,28 @@ def validate_too_targets(
     return targets
 
 
-def validate_bright_limits(
+def add_bright_limits_columns(
     targets: polars.DataFrame,
     database: PeeweeDatabaseConnection,
 ):
-    """Runs the Mugatu-like validation for bright targets."""
+    """Runs the Mugatu-like validation for bright targets.
+
+    Parameters
+    ----------
+    targets
+        The ToO targets to validate.
+    database
+        The database connection to use to query the design modes.
+
+    Returns
+    -------
+    data_frame
+        A data frame with the same rows as the input ``targets`` with additional
+        columns that indicate if a target passes the bright neighbour and magnitude
+        limit checks. The order of the returned data frame is sorted by ``too_id``
+        and may be different as that of the input one.
+
+    """
 
     targets = targets.clone()
 
@@ -743,17 +774,10 @@ def validate_bright_limits(
     # Check that the sky_brightness_mode value are valid.
     valid_brightness_modes = ["bright", "dark"]
 
-    targets_invalid_brightness_mode = targets.filter(
-        polars.col.sky_brightness_mode.is_in(valid_brightness_modes).not_()
-    )
-    if len(targets_invalid_brightness_mode) > 0:
-        raise ValidationError("Invalid sky_brightness_mode values found.")
-
     # Get a list of design modes.
     design_modes: dict[str, DesignMode] = allDesignModes(database)
 
-    # List of validated targets for each brightness mode.
-    targets_bmode_validated: list[polars.DataFrame] = []
+    processed: list[polars.DataFrame] = []
 
     # First we split the targets by observatory and sky_brightness_mode (bright or
     # dark). Then we run the check for all the design modes that match that brightness
@@ -768,48 +792,54 @@ def validate_bright_limits(
 
             design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
 
-            valid_bn: list[numpy.ndarray] = []
-            valid_mag_lim: list[numpy.ndarray] = []
-
             for dmb in design_modes_bmode:
-                log.debug(f"Validating bright neighbours for design mode: {dmb}")
+                log.debug(
+                    f"Validating bright neighbours for observatory {observatory} "
+                    f"and design mode {dmb}"
+                )
+
                 try:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", category=ErfaWarning)
 
-                        valid_bn.append(
-                            bn_validation(
-                                targets_bmode,
-                                dmb,
-                                design_modes,
-                                observatory=observatory,
-                            )
+                        bn_mask = bn_validation(
+                            targets_bmode,
+                            dmb,
+                            design_modes,
+                            observatory=observatory,
                         )
 
-                        valid_mag_lim.append(
-                            mag_lim_validation(
-                                targets_bmode,
-                                dmb,
-                                design_modes,
-                                observatory=observatory,
-                            )
-                        )
+                except FileNotFoundError:
+                    # If there is not a BN file for this design mode, we just skip it
+                    # and assume all targets pass the check.
+                    bn_mask = np.ones(len(targets_bmode), dtype=bool)
 
-                except Exception as err:
-                    log.warning(
-                        f"Error validating targets for design mode {dmb!r}: {err}"
-                    )
+                except Exception:
+                    raise
 
-            if len(valid_bn) == 0 or len(valid_mag_lim) == 0:
-                raise ValidationError("Error validating magnitude limits.")
+                mag_lim_mask = mag_lim_validation(
+                    targets_bmode,
+                    dmb,
+                    design_modes,
+                    observatory=observatory,
+                )
 
-            valid_bn_1d = numpy.all(numpy.stack(valid_bn), axis=0)
-            valid_mag_lim_1d = numpy.all(numpy.stack(valid_mag_lim), axis=0)
+                targets_bmode = targets_bmode.with_columns(
+                    **{
+                        f"bn_{dmb}_valid": polars.Series(bn_mask),
+                        f"mag_lim_{dmb}_valid": polars.Series(mag_lim_mask),
+                    }
+                )
 
-            targets_bmode = targets_bmode.with_columns(
-                bn_valid=polars.Series(valid_bn_1d),
-                mag_lim_valid=polars.Series(valid_mag_lim_1d),
-            )
-            targets_bmode_validated.append(targets_bmode)
+            processed.append(targets_bmode)
 
-    return polars.concat(targets_bmode_validated)
+    # Concatenate all the processed data frames. For targets that do not have a
+    # corresponding design mode, the columns will be nulls. We fill those with False
+    # as in principle we should not be able to observe the targets in those modes.
+    processed_df = polars.concat(processed, how="diagonal")
+    processed_df = processed_df.with_columns(
+        polars.selectors.starts_with("bn_").fill_null(False),
+        polars.selectors.starts_with("mag_lim_").fill_null(False),
+    )
+
+    return processed_df.sort("too_id")

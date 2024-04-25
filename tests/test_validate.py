@@ -10,11 +10,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy
 import pytest
 
 import too.validate
 from too.exceptions import ValidationError
-from too.validate import validate_bright_limits, validate_too_targets
+from too.validate import add_bright_limits_columns, validate_too_targets
 
 
 if TYPE_CHECKING:
@@ -89,51 +90,91 @@ def test_validate_too_target_fails(
         validate_too_targets(too_mock_test, database)
 
 
-def test_validate_bright_limits_fails(
+def test_add_bright_limits_columns_fails(
     too_mock: polars.DataFrame,
     database: PeeweeDatabaseConnection,
     mocker: pytest_mock.MockerFixture,
-    caplog: pytest.LogCaptureFixture,
 ):
     mocker.patch.object(too.validate, "bn_validation", side_effect=RuntimeError)
 
-    with pytest.raises(ValidationError):
-        validate_bright_limits(too_mock, database)
-
-    assert "Error validating targets for design mode" in caplog.record_tuples[-1][2]
+    with pytest.raises(RuntimeError):
+        add_bright_limits_columns(too_mock, database)
 
 
-@pytest.mark.parametrize("drop_bright_targets", [True, False])
 def test_validate_too_targets_bn_invalid(
     too_mock: polars.DataFrame,
     database: PeeweeDatabaseConnection,
     mocker: pytest_mock.MockerFixture,
-    drop_bright_targets: bool,
-    caplog: pytest.LogCaptureFixture,
 ):
     too_mock_bn = too_mock.with_columns(
-        bn_valid=polars.lit(True, dtype=polars.Boolean),
-        mag_lim_valid=polars.lit(True, dtype=polars.Boolean),
+        bn_dark_monit_valid=polars.lit(True, dtype=polars.Boolean),
+        mag_lim_dark_monit_valid=polars.lit(True, dtype=polars.Boolean),
     )
     too_mock_bn[0, -1] = False
 
     mocker.patch.object(
         too.validate,
-        "validate_bright_limits",
+        "add_bright_limits_columns",
         return_value=too_mock_bn,
     )
 
-    if not drop_bright_targets:
-        with pytest.raises(ValidationError):
-            validate_too_targets(
-                too_mock,
-                database,
-                drop_bright_targets=drop_bright_targets,
-            )
-    else:
+    with pytest.raises(ValidationError):
         validate_too_targets(
             too_mock,
             database,
-            drop_bright_targets=drop_bright_targets,
+            bright_limit_checks=True,
         )
-        assert "1 targets failed bright neighbour" in caplog.record_tuples[-1][2]
+
+
+def test_add_bright_limits_columns(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    mocker: pytest_mock.MockerFixture,
+):
+    # Simulate that bn_validation returns all False
+    mocker.patch.object(
+        too.validate,
+        "bn_validation",
+        side_effect=lambda targets, *_, **__: numpy.zeros(len(targets)).astype(bool),
+    )
+
+    df = add_bright_limits_columns(too_mock[0:1000], database)
+
+    assert isinstance(df, polars.DataFrame)
+    assert "bn_dark_monit_valid" in df.columns
+    assert not df[0, "bn_dark_monit_valid"]
+    assert not df["mag_lim_dark_monit_valid"].all()
+
+
+def test_add_bright_limits_columns_filenotfound(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch.object(
+        too.validate,
+        "bn_validation",
+        side_effect=FileNotFoundError,
+    )
+
+    df = add_bright_limits_columns(too_mock[0:1000], database)
+
+    assert isinstance(df, polars.DataFrame)
+    assert "bn_dark_monit_valid" in df.columns
+
+    assert df["bn_dark_monit_valid"].any()
+
+
+def test_add_bright_limits_columns_raises(
+    too_mock: polars.DataFrame,
+    database: PeeweeDatabaseConnection,
+    mocker: pytest_mock.MockerFixture,
+):
+    mocker.patch.object(
+        too.validate,
+        "bn_validation",
+        side_effect=ValueError,
+    )
+
+    with pytest.raises(ValueError):
+        add_bright_limits_columns(too_mock[0:1000], database)
