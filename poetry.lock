@@ -2870,13 +2870,13 @@ docs = ["Sphinx (>=4.0.0)", "furo (>=2021.6.18-beta.36)", "myst-parser (>=0.15)"
 
 [[package]]
 name = "sdssdb"
-version = "0.11.1"
+version = "0.11.2"
 description = "SDSS product for database management"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sdssdb-0.11.1-py3-none-any.whl", hash = "sha256:acace0978b809a1527cd90b328a1a604ec1887e996aea04d543ad47feec3dc66"},
-    {file = "sdssdb-0.11.1.tar.gz", hash = "sha256:8c8a54518f9cdaca91bc34ced22529b81f3373cc13e3ae5dec1c50ba653a5320"},
+    {file = "sdssdb-0.11.2-py3-none-any.whl", hash = "sha256:b0954fbc4a6b547c7c7dd55ccc1cf7edb0f52ef699da6c642eec7d50c5efc601"},
+    {file = "sdssdb-0.11.2.tar.gz", hash = "sha256:260ea1252e77b52ce590071281e84d26f91a1c2a770ba2b0c9e9a4aa98cf9a2a"},
 ]
 
 [package.dependencies]
@@ -3214,4 +3214,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12,<4.0"
-content-hash = "4514ad971c967a83a4b2917e9c6563c480baa18fbcf6f79ae7e702dbb78859b2"
+content-hash = "75f23e21c46d08284d2fd55dfbe6d334f49ddc812cfc001d508962bd6460ea62"

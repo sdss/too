@@ -1,6 +1,8 @@
 CREATE SCHEMA catalogdb;
 CREATE SCHEMA targetdb;
 CREATE SCHEMA sandbox;
+CREATE SCHEMA opsdb_apo;
+CREATE SCHEMA opsdb_lco;
 
 CREATE TABLE catalogdb.catalog (
     catalogid BIGINT,
@@ -285,6 +287,29 @@ CREATE TABLE targetdb.observatory (
     pk SERIAL PRIMARY KEY NOT NULL,
     label TEXT NOT NULL);
 
+CREATE TABLE opsdb_apo.assignment_to_focal (
+    pk SERIAL PRIMARY KEY NOT NULL,
+    assignment_pk INTEGER,
+    configuration_id INTEGER,
+    xfocal REAL,
+    yfocal REAL,
+    positioner_id SMALLINT,
+    catalogid BIGINT,
+    collided BOOLEAN,
+    replaced BOOLEAN);
+
+CREATE TABLE opsdb_lco.assignment_to_focal (
+    pk SERIAL PRIMARY KEY NOT NULL,
+    assignment_pk INTEGER,
+    configuration_id INTEGER,
+    xfocal REAL,
+    yfocal REAL,
+    positioner_id SMALLINT,
+    catalogid BIGINT,
+    collided BOOLEAN,
+    replaced BOOLEAN);
+
+
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
 ALTER TABLE catalogdb.catalog_to_gaia_dr3_source ADD PRIMARY KEY (catalogid, target_id, version_id);
@@ -308,6 +333,7 @@ ALTER TABLE ONLY targetdb.field
 ALTER TABLE ONLY targetdb.field
     ADD CONSTRAINT version_fk
     FOREIGN KEY (version_pk) REFERENCES targetdb.version(pk);
+
 
 CREATE INDEX ON catalogdb.catalog (version_id);
 CREATE INDEX ON catalogdb.catalog (q3c_ang2ipix(ra, dec));
@@ -369,6 +395,7 @@ INSERT INTO targetdb.cadence VALUES ('bright_1x1', 1, '{0}', '{1}', '{0}', '{0}'
 INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
 INSERT INTO targetdb.observatory VALUES (0, 'APO'), (1, 'LCO');
 
+
 \copy catalogdb.catalog FROM PROGRAM '/usr/bin/gzip -dc catalog.csv.gz' WITH CSV HEADER;
 \copy catalogdb.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
@@ -380,6 +407,7 @@ INSERT INTO targetdb.observatory VALUES (0, 'APO'), (1, 'LCO');
 \copy targetdb.version FROM PROGRAM '/usr/bin/gzip -dc targetdb_version.csv.gz' WITH CSV HEADER;
 \copy targetdb.field FROM PROGRAM '/usr/bin/gzip -dc targetdb_field.csv.gz' WITH CSV HEADER;
 \copy targetdb.design_mode FROM 'design_mode.csv' WITH CSV HEADER;
+
 
 VACUUM ANALYZE catalogdb.catalog;
 VACUUM ANALYZE catalogdb.sdss_id_stacked;

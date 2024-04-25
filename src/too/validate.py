@@ -428,6 +428,11 @@ def bn_validation(
 
     """
 
+    log.debug(
+        f"Running bright neighbour validation for observatory {observatory} "
+        f"and design mode {design_mode}"
+    )
+
     BN_HEALPIX = os.getenv("BN_HEALPIX")
     if BN_HEALPIX is None:
         raise ValueError("Environment variable BN_HEALPIX not set.")
@@ -583,6 +588,12 @@ def mag_lim_validation(
         magnitude limit validation for specified design_mode.
         True means passes check.
     """
+
+    log.debug(
+        f"Running magnitude limit check for observatory {observatory} "
+        f"and design mode {design_mode}"
+    )
+
     valid_too_mag_lim = np.zeros(len(targets), dtype=bool)
 
     # get the magnitude array
@@ -746,6 +757,7 @@ def validate_too_targets(
 def add_bright_limits_columns(
     targets: polars.DataFrame,
     database: PeeweeDatabaseConnection,
+    observatories: list[str] = ["APO", "LCO"],
 ):
     """Runs the Mugatu-like validation for bright targets.
 
@@ -755,6 +767,8 @@ def add_bright_limits_columns(
         The ToO targets to validate.
     database
         The database connection to use to query the design modes.
+    observatories
+        The list of observatories to check.
 
     Returns
     -------
@@ -769,7 +783,8 @@ def add_bright_limits_columns(
     targets = targets.clone()
 
     # Get the field/observatory for each tile.
-    targets = match_fields(targets, database)
+    if "observatory" not in targets.columns:
+        targets = match_fields(targets, database)
 
     # Check that the sky_brightness_mode value are valid.
     valid_brightness_modes = ["bright", "dark"]
@@ -783,7 +798,7 @@ def add_bright_limits_columns(
     # dark). Then we run the check for all the design modes that match that brightness
     # mode. We do not reject targets here but we mark if they pass the bright neighbour
     # and magnitude limit checks.
-    for observatory in ["APO", "LCO"]:
+    for observatory in observatories:
         for bmode in valid_brightness_modes:
             targets_bmode = targets.filter(
                 (polars.col.sky_brightness_mode == bmode)
@@ -793,11 +808,6 @@ def add_bright_limits_columns(
             design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
 
             for dmb in design_modes_bmode:
-                log.debug(
-                    f"Validating bright neighbours for observatory {observatory} "
-                    f"and design mode {dmb}"
-                )
-
                 try:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", category=ErfaWarning)

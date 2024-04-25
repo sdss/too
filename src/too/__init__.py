@@ -37,6 +37,7 @@ __version__ = get_package_version(path=__file__, package_name=NAME)
 from .carton import *
 from .database import *
 from .datamodel import *
+from .dump import *
 from .mock import *
 from .tools import *
 from .validate import *
