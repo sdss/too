@@ -178,6 +178,9 @@ def xmatch_too_targets(
         log.warning("All ToO targets are already matched.")
         return
 
+    plan_config = TOO_XMATCH_CONFIG.copy()
+    plan_config["1.2.0"]["debug"] = log.sh.level
+
     # Create the XMatch instance here. We'll need it to get the relational model.
     xmatch_planner = XMatchPlanner.read(
         database,
