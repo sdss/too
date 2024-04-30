@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 __all__ = ["xmatch_too_targets"]
 
 
-TOO_RUN_ID = 9
+TOO_RUN_ID = 10
 TOO_XMATCH_PLAN = "1.2.0"
 TOO_XMATCH_CONFIG = {
     "1.2.0": {
