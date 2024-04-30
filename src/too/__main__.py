@@ -8,12 +8,15 @@
 
 from __future__ import annotations
 
+import functools
+
 import click
 import polars
 from click_option_group import OptionGroup
 
 from too import (
     connect_to_database,
+    dump_to_parquet,
     load_too_targets,
     log,
     read_too_file,
@@ -23,49 +26,53 @@ from too import (
 )
 
 
-run_options = OptionGroup(
+run_option_group = OptionGroup(
     "Run options",
     help="Options for loading ToO targets and running the too carton.",
 )
-server_options = OptionGroup(
+server_option_group = OptionGroup(
     "Server options",
     help="Options for connecting to the database server.",
 )
 
 
-@click.command()
+def server_options(f):
+    @server_option_group.option(
+        "--dbname",
+        default="sdss5db",
+        help="The name of the database to connect to.",
+    )
+    @server_option_group.option(
+        "--host",
+        default="localhost",
+        help="The host of the database server.",
+    )
+    @server_option_group.option(
+        "--port",
+        default=None,
+        help="The port of the database server.",
+    )
+    @server_option_group.option(
+        "--user",
+        default="sdss",
+        help="The user to connect to the database.",
+    )
+    @functools.wraps(f)
+    def wrapper_server_options(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return wrapper_server_options
+
+
+@click.group()
+def too_cli():
+    """Command line interface for ToOs."""
+
+    pass
+
+
+@too_cli.command()
 @click.argument("FILES", type=click.Path(exists=True), nargs=-1)
-@run_options.option(
-    "--cross-match/--no-cross-match",
-    default=True,
-    help="Cross-match the input files. "
-    "If --no-cross-match is passed, the carton is not run.",
-)
-@run_options.option(
-    "--run-carton/--no-run-carton",
-    default=True,
-    help="Run the carton after cross-matching.",
-)
-@server_options.option(
-    "--dbname",
-    default="sdss5db",
-    help="The name of the database to connect to.",
-)
-@server_options.option(
-    "--host",
-    default="localhost",
-    help="The host of the database server.",
-)
-@server_options.option(
-    "--port",
-    default=None,
-    help="The port of the database server.",
-)
-@server_options.option(
-    "--user",
-    default="sdss",
-    help="The user to connect to the database.",
-)
 @click.option(
     "-v",
     "--verbose",
@@ -77,7 +84,19 @@ server_options = OptionGroup(
     type=click.Path(),
     help="Path where to write the log file.",
 )
-def too_cli(
+@server_options
+@run_option_group.option(
+    "--cross-match/--no-cross-match",
+    default=True,
+    help="Cross-match the input files. "
+    "If --no-cross-match is passed, the carton is not run.",
+)
+@run_option_group.option(
+    "--run-carton/--no-run-carton",
+    default=True,
+    help="Run the carton after cross-matching.",
+)
+def process(
     files: tuple[str],
     cross_match: bool = True,
     run_carton: bool = True,
@@ -88,7 +107,7 @@ def too_cli(
     verbose: bool = False,
     write_log: str | None = None,
 ):
-    """Command line interface for ToOs."""
+    """Ingest and process new lists of ToOs."""
 
     if verbose:
         log.sh.setLevel("DEBUG")
@@ -114,6 +133,29 @@ def too_cli(
         if run_carton:
             log.info("Running the ToO carton.")
             run_too_carton()
+
+
+@too_cli.command()
+@click.argument("FILE", type=str)
+@click.option(
+    "--observatory",
+    type=click.Choice(["APO", "LCO"], case_sensitive=False),
+    help="The observatory for which to dump the ToO targets.",
+    required=True,
+)
+@server_options
+def dump(
+    file: str,
+    observatory: str,
+    dbname: str = "sdss5db",
+    host: str = "localhost",
+    port: int | None = None,
+    user: str = "sdss",
+):
+    """Dumps the current ToO targets into a Parquet file."""
+
+    database = connect_to_database(dbname, host=host, port=port, user=user)
+    dump_to_parquet(observatory.upper(), file, database=database)
 
 
 if __name__ == "__main__":

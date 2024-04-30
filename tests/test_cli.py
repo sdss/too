@@ -32,6 +32,7 @@ def test_cli_only_load(files_path: pathlib.Path, too_mock: polars.DataFrame):
     result = runner.invoke(
         too_cli,
         [
+            "process",
             "--dbname",
             "sdss5db_too_test",
             "--no-cross-match",
@@ -49,7 +50,7 @@ def test_cli_only_load(files_path: pathlib.Path, too_mock: polars.DataFrame):
 
 def test_cli_only_process():
     runner = CliRunner()
-    result = runner.invoke(too_cli, ["--dbname", "sdss5db_too_test", "-v"])
+    result = runner.invoke(too_cli, ["process", "--dbname", "sdss5db_too_test", "-v"])
 
     assert result.exit_code == 0
 
@@ -65,6 +66,7 @@ def test_cli_update(files_path: pathlib.Path, too_mock: polars.DataFrame):
     result = runner.invoke(
         too_cli,
         [
+            "process",
             "--dbname",
             "sdss5db_too_test",
             "--write-log",
@@ -91,3 +93,23 @@ def test_cli_update(files_path: pathlib.Path, too_mock: polars.DataFrame):
         .count()
     )
     assert n_carton_to_target == n_target
+
+
+def test_cli_dump(tmp_dir: pathlib.Path):
+    tmp_file = tmp_dir / "dump_APO.parquet"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        too_cli,
+        [
+            "dump",
+            "--observatory",
+            "APO",
+            "--dbname",
+            "sdss5db_too_test",
+            str(tmp_file),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert tmp_file.exists()
