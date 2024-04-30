@@ -658,6 +658,8 @@ def validate_too_targets(
 
     """
 
+    from sdsstools import get_sjd
+
     n_targets = targets.height
 
     if targets.schema != too_dtypes:
@@ -748,6 +750,7 @@ def validate_too_targets(
             )
 
     # Fill some optional columns.
+    observe_from_now = polars.lit(get_sjd("APO"), dtype=polars.Int32)
     targets = targets.with_columns(
         active=polars.col.active.fill_null(True),
         inertial=polars.col.inertial.fill_null(False),
@@ -757,6 +760,7 @@ def validate_too_targets(
         delta_dec=polars.col.delta_dec.fill_null(polars.lit(0, dtype=polars.Float32)),
         n_exposures=polars.col.n_exposures.fill_null(polars.lit(1, dtype=polars.Int16)),
         priority=polars.col.priority.fill_null(polars.lit(5, dtype=polars.Int16)),
+        observe_from_mjd=polars.col.observe_from_mjd.fill_null(observe_from_now),
     )
 
     return targets

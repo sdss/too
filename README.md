@@ -58,14 +58,19 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | n_exposures         | int16   | The minimum number of exposures required for the ToO to be complete and not assigned anymore. [required]             |
 | priority            | int16   | The relative prioriry of this target (10: highest, 1: lowest, 0: the target will be ignored)                         |
 | active              | boolean | `true` if the target is active and should be assigned to configurations if possible. [required]                      |
-| expiration_date     | int32   | MJD at which the target should automatically be consider inactive. If empty, the target never expires.               |
+| observe_from_mjd    | int32   | MJD from which the target is considered observable. Default to the current date.                                     |
+| observe_until_mjd   | int32   | MJD at which the target should automatically be consider inactive. If empty, the target never expires.               |
 | observed            | boolean | `true` if the target has been fully observed and should not be assigned again. [required]                            |
+
+The input file(s) must contain *all* the columns defined above with the correct data formats.
 
 At least one magnitude is required for target validation. If one of the Sloan magnitude is provided, *all* the ugriz values must be provided. A sample, valid ToO file can be found [here](docs/sample.csv).
 
 A file can be validated by using the `validate_too_targets` function, which will also fill nulls in some columns with default values.
 
 The `too_id` must be unique across all targets of opportunity. The ingestion of new ToOs will fail if a ToO is found in the database with the same `too_id`.
+
+MJDs are understood of the MJD on which the night *ends*. For example, a target with `observe_from_mjd=60422` will attempt to observ the target from the night in which MJD 60421 crosses into 60422.
 
 ```python
 from too import read_too_file, validate_too_targets

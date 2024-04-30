@@ -204,7 +204,7 @@ def get_active_targets(database: PeeweeDatabaseConnection):
     dataframe
         A dataframe with the active ToO targets. These include targets from
         ``catalogdb.too_target`` that have ``active`` set to ``true`` and whose
-        ``expiration_date`` is greater or equal the current MJD.
+        ``observe_from_mjd`` is greater or equal the current MJD.
 
     """
 
@@ -223,6 +223,6 @@ def get_active_targets(database: PeeweeDatabaseConnection):
 
     mjd = get_sjd("APO") + 1
 
-    targets = targets.filter(polars.col.expiration_date >= mjd)
+    targets = targets.filter(polars.col.observe_from_mjd >= mjd)
 
     return targets

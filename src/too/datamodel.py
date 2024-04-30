@@ -49,7 +49,8 @@ too_dtypes: polars.type_aliases.SchemaDefinition = {
     "n_exposures": polars.Int16,
     "priority": polars.Int16,
     "active": polars.Boolean,
-    "expiration_date": polars.Int32,
+    "observe_from_mjd": polars.Int32,
+    "observe_until_mjd": polars.Int32,
     "observed": polars.Boolean,
 }
 
@@ -74,7 +75,8 @@ too_metadata_columns = [
     "n_exposures",
     "priority",
     "active",
-    "expiration_date",
+    "observe_from_mjd",
+    "observe_until_mjd",
     "observed",
 ]
 
@@ -110,7 +112,8 @@ column_descriptions = {
     "n_exposures": "The minimum number of exposures required for the ToO to be complete and not assigned anymore. [required]",
     "priority": "The relative prioriry of this target (10: highest, 1: lowest, 0: the target will be ignored)",
     "active": "`true` if the target is active and should be assigned to configurations if possible. [required]",
-    "expiration_date": "MJD at which the target should automatically be consider inactive. If empty, the target never expires.",
+    "observe_from_mjd": "MJD from which the target is considered observable. Default to the current date.",
+    "observe_until_mjd": "MJD at which the target should automatically be consider inactive. If empty, the target never expires.",
     "observed": "`true` if the target has been fully observed and should not be assigned again. [required]",
 }
 
