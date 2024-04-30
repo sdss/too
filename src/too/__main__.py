@@ -90,9 +90,6 @@ def too_cli(
 ):
     """Command line interface for ToOs."""
 
-    if len(files) == 0:
-        raise click.UsageError("At least one file must be passed.")
-
     if verbose:
         log.sh.setLevel("DEBUG")
 
