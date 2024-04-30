@@ -65,6 +65,8 @@ At least one magnitude is required for target validation. If one of the Sloan ma
 
 A file can be validated by using the `validate_too_targets` function, which will also fill nulls in some columns with default values.
 
+The `too_id` must be unique across all targets of opportunity. The ingestion of new ToOs will fail if a ToO is found in the database with the same `too_id`.
+
 ```python
 from too import read_too_file, validate_too_targets
 df = read_too_file('sample.csv')
