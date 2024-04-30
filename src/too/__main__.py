@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import functools
+import sys
 
 import click
 import polars
@@ -22,8 +23,10 @@ from too import (
     read_too_file,
     run_too_carton,
     too_dtypes,
+    validate_too_targets,
     xmatch_too_targets,
 )
+from too.exceptions import ValidationError
 
 
 run_option_group = OptionGroup(
@@ -160,3 +163,20 @@ def dump(
 
 if __name__ == "__main__":
     too_cli()
+
+
+@too_cli.command()
+@click.argument("FILE", type=str)
+def validate(file: str):
+    """Validates a ToO file."""
+
+    df = read_too_file(file)
+
+    try:
+        validate_too_targets(df)
+    except ValidationError as ee:
+        log.error(f"Validation failed with error: {ee}")
+        sys.exit(1)
+    except Exception as ee:
+        log.error(f"Unexpected error: {ee}")
+        sys.exit(1)
