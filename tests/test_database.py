@@ -22,7 +22,6 @@ from sdssdb.peewee.sdss5db import catalogdb
 from too.database import (
     connect_to_database,
     database_uri_from_connection,
-    get_active_targets,
     get_database_uri,
     load_too_targets,
 )
@@ -196,17 +195,3 @@ def test_update_too_targets_warning(
     log_tuples = caplog.record_tuples
     assert "Some ToO targets are already in too_target" in log_tuples[-2][2]
     assert "No new ToO targets to add." in log_tuples[-1][2]
-
-
-def test_get_too_targets(too_mock: polars.DataFrame):
-
-    targets = too_mock[0:10].with_columns(
-        expiration_date=polars.lit(100000),
-        active=polars.lit(True),
-    )
-    targets[5, "active"] = False
-
-    load_too_targets(targets, catalogdb.database, update_existing=True)
-
-    active_targets = get_active_targets(catalogdb.database)
-    assert len(active_targets) == 9

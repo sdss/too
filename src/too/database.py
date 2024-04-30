@@ -26,12 +26,7 @@ if TYPE_CHECKING:
     from sdssdb.connection import PeeweeDatabaseConnection
 
 
-__all__ = [
-    "connect_to_database",
-    "get_database_uri",
-    "load_too_targets",
-    "get_active_targets",
-]
+__all__ = ["connect_to_database", "get_database_uri", "load_too_targets"]
 
 DEFAULT_USER: str = "sdss"
 DEFAULT_HOST = "localhost"
@@ -199,40 +194,3 @@ def load_too_targets(
     database.execute_sql("VACUUM ANALYZE catalogdb.too_metadata;")
 
     return new_targets
-
-
-def get_active_targets(database: PeeweeDatabaseConnection):
-    """Returns the list of active ToO targets.
-
-    Parameters
-    ----------
-    database
-        The database connection.
-
-    Returns
-    -------
-    dataframe
-        A dataframe with the active ToO targets. These include targets from
-        ``catalogdb.too_target`` that have ``active`` set to ``true`` and whose
-        ``observe_from_mjd`` is greater or equal the current MJD.
-
-    """
-
-    from sdsstools.time import get_sjd
-
-    assert database.connected, "Database is not connected."
-
-    database_uri = database_uri_from_connection(database)
-
-    targets = polars.read_database_uri(
-        "SELECT t.*,tm.* FROM catalogdb.too_target t JOIN catalogdb.too_metadata tm "
-        "USING (too_id) WHERE tm.active = true AND tm.observed = false",
-        database_uri,
-        engine="adbc",
-    )
-
-    mjd = get_sjd("APO") + 1
-
-    targets = targets.filter(polars.col.observe_from_mjd >= mjd)
-
-    return targets
