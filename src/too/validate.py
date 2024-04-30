@@ -19,12 +19,7 @@ import numpy as np
 import polars
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
-from astropy_healpix import HEALPix
 from erfa import ErfaWarning
-
-from coordio.utils import Moffat2dInterp, _offset_radec, object_offset
-from sdssdb.connection import PeeweeDatabaseConnection
-from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
 
 from too import log
 from too.datamodel import mag_columns, too_dtypes
@@ -41,9 +36,6 @@ __all__ = ["validate_too_targets", "add_bright_limits_columns"]
 
 # load enviornment variable with path to healpix maps
 BN_HEALPIX = os.getenv("BN_HEALPIX")
-
-# add function for offseting
-fmagloss = Moffat2dInterp()
 
 
 def check_assign_mag_limit(
@@ -126,6 +118,8 @@ def allDesignModes(database: PeeweeDatabaseConnection):
 
     """
 
+    from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
+
     desmodes = DesignModeDB.select()
     dmd = collections.OrderedDict()
     for desmode in desmodes:
@@ -187,6 +181,8 @@ class DesignMode:
 
     def __init__(self, database: PeeweeDatabaseConnection, label: str | None = None):
 
+        from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
+
         DesignModeDB._meta.database(database)  # type:ignore
 
         if label is not None:
@@ -203,6 +199,8 @@ class DesignMode:
             name of design mode
 
         """
+
+        from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
 
         self.desmode_label = label
 
@@ -342,7 +340,13 @@ def calculate_offsets(
 
     offset_flag: np.array
         flags associated with the offseting
+
     """
+
+    from coordio.utils import Moffat2dInterp, object_offset
+
+    # add function for offseting
+    fmagloss = Moffat2dInterp()
 
     delta_ra = np.zeros(len(targets), dtype=float)
     delta_dec = np.zeros(len(targets), dtype=float)
@@ -427,6 +431,10 @@ def bn_validation(
         True means passes check.
 
     """
+
+    from astropy_healpix import HEALPix
+
+    from coordio.utils import _offset_radec
 
     log.debug(
         f"Running bright neighbour validation for observatory {observatory} "

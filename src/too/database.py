@@ -11,16 +11,18 @@ from __future__ import annotations
 import os
 import pathlib
 
-import polars
+from typing import TYPE_CHECKING
 
-from sdssdb.connection import PeeweeDatabaseConnection
-from sdssdb.peewee.sdss5db import catalogdb
-from sdsstools.time import get_sjd
+import polars
 
 from too import log
 from too.datamodel import too_dtypes, too_metadata_columns
 from too.tools import read_too_file
 from too.validate import validate_too_targets
+
+
+if TYPE_CHECKING:
+    from sdssdb.connection import PeeweeDatabaseConnection
 
 
 __all__ = [
@@ -42,6 +44,8 @@ def connect_to_database(
     password: str | None = None,
 ):
     """Connects the ``sdssdb`` ``sdss5db`` models to the database."""
+
+    from sdssdb.peewee.sdss5db import catalogdb
 
     if port is None:
         port = int(os.environ.get("PGPORT", 5432))
@@ -203,6 +207,8 @@ def get_active_targets(database: PeeweeDatabaseConnection):
         ``expiration_date`` is greater or equal the current MJD.
 
     """
+
+    from sdsstools.time import get_sjd
 
     assert database.connected, "Database is not connected."
 

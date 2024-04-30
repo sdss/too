@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from too import log
 
 
@@ -19,6 +21,12 @@ TOO_TARGET_PLAN = "1.1.0"
 
 def run_too_carton():
     """Runs the ToO carton."""
+
+    from target_selection import log as ts_log
+    from target_selection.exceptions import TargetSelectionImportWarning
+
+    ts_log.setLevel(10000)  # Disable target_selection logging
+    warnings.simplefilter("ignore", TargetSelectionImportWarning)
 
     from target_selection.cartons.too import ToO_Carton  # Slow import
 

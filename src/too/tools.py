@@ -18,9 +18,6 @@ from typing import TYPE_CHECKING
 import httpx
 import polars
 import rich.progress
-from astropy.coordinates import SkyCoord, match_coordinates_sky
-
-from coordio.defaults import APO_MAX_FIELD_R, LCO_MAX_FIELD_R
 
 from too.datamodel import too_dtypes
 
@@ -120,6 +117,10 @@ def match_fields(
         The input dataframe with ``field_id`` and ``observatory`` columns.
 
     """
+
+    from astropy.coordinates import SkyCoord, match_coordinates_sky
+
+    from coordio.defaults import APO_MAX_FIELD_R, LCO_MAX_FIELD_R
 
     targets = targets.clone()
 

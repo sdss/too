@@ -5,16 +5,19 @@ from __future__ import annotations
 import os
 import pathlib
 
+from typing import TYPE_CHECKING
+
 import numpy
 import polars
 from peewee import JOIN, fn
 
-from sdssdb.connection import PeeweeDatabaseConnection
-from sdssdb.peewee.sdss5db import catalogdb, opsdb
-
 from too import log
 from too.tools import match_fields
 from too.validate import add_bright_limits_columns
+
+
+if TYPE_CHECKING:
+    from sdssdb.connection import PeeweeDatabaseConnection
 
 
 __all__ = ["dump_to_parquet"]
@@ -38,6 +41,8 @@ def dump_to_parquet(
         the same database.
 
     """
+
+    from sdssdb.peewee.sdss5db import catalogdb, opsdb
 
     path = pathlib.Path(path)
 

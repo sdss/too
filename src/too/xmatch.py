@@ -8,15 +8,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import peewee
 import polars
 
-from sdssdb.connection import PeeweeDatabaseConnection
-from sdssdb.peewee.sdss5db.catalogdb import ToO_Target, Version
-from target_selection.xmatch import XMatchPlanner
-
 from too import log
 from too.database import get_database_uri
+
+
+if TYPE_CHECKING:
+    from sdssdb.connection import PeeweeDatabaseConnection
 
 
 __all__ = ["xmatch_too_targets"]
@@ -121,6 +123,12 @@ def xmatch_too_targets(
         table.
 
     """
+
+    from sdssdb.peewee.sdss5db.catalogdb import ToO_Target, Version
+    from target_selection import log as ts_log
+    from target_selection.xmatch import XMatchPlanner
+
+    ts_log.setLevel(10000)  # Disable target_selection logging
 
     assert database.connected, "Database is not connected"
 

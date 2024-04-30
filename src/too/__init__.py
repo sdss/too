@@ -12,12 +12,7 @@ import warnings
 
 import sdssdb
 from sdsstools import get_logger, get_package_version
-from target_selection import log as ts_log
-from target_selection.exceptions import TargetSelectionImportWarning
 
-
-ts_log.setLevel(10000)  # Disable target_selection logging
-warnings.simplefilter("ignore", TargetSelectionImportWarning)
 
 sdssdb.autoconnect = False
 

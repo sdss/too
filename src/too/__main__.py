@@ -12,6 +12,16 @@ import click
 import polars
 from click_option_group import OptionGroup
 
+from too import (
+    connect_to_database,
+    load_too_targets,
+    log,
+    read_too_file,
+    run_too_carton,
+    too_dtypes,
+    xmatch_too_targets,
+)
+
 
 run_options = OptionGroup(
     "Run options",
@@ -80,15 +90,8 @@ def too_cli(
 ):
     """Command line interface for ToOs."""
 
-    from too import (
-        connect_to_database,
-        load_too_targets,
-        log,
-        read_too_file,
-        run_too_carton,
-        too_dtypes,
-        xmatch_too_targets,
-    )
+    if len(files) == 0:
+        raise click.UsageError("At least one file must be passed.")
 
     if verbose:
         log.sh.setLevel("DEBUG")
