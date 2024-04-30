@@ -40,14 +40,14 @@ def read_too_file(path: polars.DataFrame | pathlib.Path | str) -> polars.DataFra
         if path.suffix == ".parquet":
             targets = polars.read_parquet(path)
         elif path.suffix == ".csv":
-            targets = polars.read_csv(path, schema=too_dtypes)
+            targets = polars.read_csv(path, schema=too_dtypes)  # type: ignore
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
 
     else:
         targets = path
 
-    targets = targets.sort("too_id")
+    targets = targets.sort("too_id").select(list(too_dtypes))
     return targets
 
 
