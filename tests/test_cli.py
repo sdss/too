@@ -95,8 +95,8 @@ def test_cli_update(files_path: pathlib.Path, too_mock: polars.DataFrame):
     assert n_carton_to_target == n_target
 
 
-def test_cli_dump(tmp_dir: pathlib.Path):
-    tmp_file = tmp_dir / "dump_APO.parquet"
+def test_cli_dump(tmp_path: pathlib.Path):
+    tmp_file = tmp_path / "dump_APO.parquet"
 
     runner = CliRunner()
     result = runner.invoke(
