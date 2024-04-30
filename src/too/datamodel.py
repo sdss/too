@@ -10,18 +10,14 @@
 
 from __future__ import annotations
 
-from typing import Mapping
-
 import polars
-import polars.type_aliases as pta
+import polars.type_aliases
 
 
 __all__ = ["too_dtypes"]
 
 
-PolarsTypeMapping = Mapping[str, pta.PolarsDataType]
-
-too_dtypes: PolarsTypeMapping = {
+too_dtypes: polars.type_aliases.SchemaDefinition = {
     "too_id": polars.Int64,
     "fiber_type": polars.String,
     "catalogid": polars.Int64,
