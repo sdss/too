@@ -128,8 +128,8 @@ def load_too_targets(
     new_in_db = too_target_new.filter(polars.col.too_id.is_in(db_targets["too_id"]))
     if not new_in_db.equals(db_targets):
         log.warning(
-            "Some ToO targets may have changed values. These changes will be "
-            "ignored but should be reviewed."
+            "Some ToO targets are already in too_target. Only changes "
+            "to metadata columns will be applied."
         )
 
     new_targets = too_target_new.filter(~polars.col.too_id.is_in(db_targets["too_id"]))

@@ -194,7 +194,7 @@ def test_update_too_targets_warning(
     assert result.height == 0
 
     log_tuples = caplog.record_tuples
-    assert "Some ToO targets may have changed values." in log_tuples[-2][2]
+    assert "Some ToO targets are already in too_target" in log_tuples[-2][2]
     assert "No new ToO targets to add." in log_tuples[-1][2]
 
 
