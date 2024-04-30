@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import pathlib
 
@@ -105,6 +106,8 @@ def load_too_targets(
 
     assert database.connected, "Database is not connected."
 
+    now = datetime.datetime.now(datetime.UTC)
+
     targets = read_too_file(targets)
     targets = validate_too_targets(targets, database)
 
@@ -136,6 +139,10 @@ def load_too_targets(
             return polars.DataFrame(schema=too_dtypes)
     else:
         log.info(f"Loading {len(new_targets)} new ToO(s) into catalogdb.too_target.")
+
+        # Add current date-time.
+        new_targets = new_targets.with_columns(added_date=polars.lit(now))
+
         new_targets.write_database(
             "catalogdb.too_target",
             database_uri,
@@ -160,6 +167,9 @@ def load_too_targets(
         )
 
         # Update the metadata dataframe.
+        too_metadata_new = too_metadata_new.with_columns(
+            last_modified_date=polars.lit(now)
+        )
         too_metadata = too_metadata.update(
             too_metadata_new,
             on="too_id",
