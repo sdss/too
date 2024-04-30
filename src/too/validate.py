@@ -638,7 +638,7 @@ def mag_lim_validation(
 
 def validate_too_targets(
     targets: polars.DataFrame,
-    database: PeeweeDatabaseConnection,
+    database: PeeweeDatabaseConnection | None = None,
     bright_limit_checks: bool = False,
 ):
     """Validates a list of ToO targets.
@@ -683,7 +683,7 @@ def validate_too_targets(
     if targets["active"].is_null().any():
         raise ValidationError("Null 'active' column values found in ToO targets.")
 
-    # Get magnitude columns and filted rows that do not have any value set.
+    # Get magnitude columns and filtered rows that do not have any value set.
     # This is equivalent to Pandas .drop(axis=1). In Polars is a bit harder. See
     # https://github.com/pola-rs/polars/issues/1613
     mag_data = targets[mag_columns]
@@ -732,6 +732,9 @@ def validate_too_targets(
         raise ValidationError("Invalid sky_brightness_mode values found.")
 
     if bright_limit_checks:
+        if database is None:
+            raise ValueError("Database connection is required for bright limit checks.")
+
         # Validate magnitude limits and bright neighbours.
         log.info("Running bright neighbour and magnitude limit checks.")
         bn_targets = add_bright_limits_columns(targets, database)

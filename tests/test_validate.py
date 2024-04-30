@@ -126,6 +126,15 @@ def test_validate_too_targets_bn_invalid(
         )
 
 
+def test_validate_too_targets_bn_no_database(too_mock: polars.DataFrame):
+    with pytest.raises(ValueError):
+        validate_too_targets(
+            too_mock,
+            database=None,
+            bright_limit_checks=True,
+        )
+
+
 def test_add_bright_limits_columns(
     too_mock: polars.DataFrame,
     database: PeeweeDatabaseConnection,
