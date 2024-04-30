@@ -124,7 +124,7 @@ def process(
             targets = targets.vstack(read_too_file(file))
 
         log.info("Loading targets into the database.")
-        load_too_targets(targets, database)
+        load_too_targets(targets, database, update_existing=True)
 
     if cross_match:
         log.info("Cross-matching targets.")
