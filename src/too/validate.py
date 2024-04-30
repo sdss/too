@@ -711,7 +711,7 @@ def validate_too_targets(
     if sloan_mags_null.height > 0:
         raise ValidationError("Found rows with incomplete Sloan magnitudes.")
 
-    if set(targets["fiber_type"].unique()) != set(["APOGEE", "BOSS"]):
+    if len(set(targets["fiber_type"].unique()) - set(["APOGEE", "BOSS"])) > 0:
         raise ValidationError(
             "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."
         )
@@ -812,6 +812,9 @@ def add_bright_limits_columns(
                 (polars.col.sky_brightness_mode == bmode)
                 & (polars.col.observatory == observatory)
             )
+
+            if len(targets_bmode) == 0:
+                continue
 
             design_modes_bmode = [dm for dm in design_modes if dm.startswith(bmode)]
 
