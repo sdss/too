@@ -807,6 +807,12 @@ def add_bright_limits_columns(
     # Get a list of design modes.
     design_modes: dict[str, DesignMode] = allDesignModes(database)
 
+    # Add all columns for all design modes and set to false for now.
+    targets = targets.with_columns(
+        **{f"bn_{dm}_valid": polars.lit(False) for dm in design_modes},
+        **{f"mag_lim_{dm}_valid": polars.lit(False) for dm in design_modes},
+    )
+
     processed: list[polars.DataFrame] = []
 
     # First we split the targets by observatory and sky_brightness_mode (bright or
