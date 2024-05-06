@@ -66,11 +66,11 @@ The input file(s) must contain *all* the columns defined above with the correct 
 
 At least one magnitude is required for target validation. If one of the Sloan magnitude is provided, *all* the ugriz values must be provided. A sample, valid ToO file can be found [here](docs/sample.csv).
 
-A file can be validated by using the `validate_too_targets` function, which will also fill nulls in some columns with default values.
-
 The `too_id` must be unique across all targets of opportunity. The ingestion of new ToOs will fail if a ToO is found in the database with the same `too_id`.
 
 MJDs are understood of the MJD on which the night *ends*. For example, a target with `observe_from_mjd=60422` will attempt to observ the target from the night in which MJD 60421 crosses into 60422.
+
+A file can be validated by using the `validate_too_targets` function, which will also fill nulls in some columns with default values.
 
 ```python
 from too import read_too_file, validate_too_targets
@@ -78,7 +78,13 @@ df = read_too_file('sample.csv')
 validate_too_targets(df)
 ```
 
-For more details see [this wiki page](https://sdss-wiki.atlassian.net/wiki/x/hhTR). To regenerate this table run
+or via the CLI
+
+```bash
+too validate sample.csv
+```
+
+For more details see [this wiki page](https://sdss-wiki.atlassian.net/wiki/x/hhTR). To regenerate the table above, run
 
 ```python
 >>> from too.datamodel import datamodel_to_markdown
@@ -89,3 +95,34 @@ For more details see [this wiki page](https://sdss-wiki.atlassian.net/wiki/x/hhT
 | fiber_type          | string  | Type of fiber to be used to observe the target [required].                                             |
 ...
 ```
+
+## Running `too`
+
+### Loading targets from a file
+
+When a new ToO file with the format described in the previous section is available, it can be loaded into the database using the CLI command
+
+```bash
+too process <FILE>
+```
+
+See `too process --help` for more information on available options.
+
+`too process` will perform the following tasks:
+
+- Read and validate the input file(s).
+- Establish a connection to the database using the command flags as modifiers. Without additional flags `too` will try to connect to the database `sdss5db` on localhost with user `sdss`.
+- Load new targets into the tables `catalogdb.too_target` and `catalogdb.too_metadata`.
+- Update data in `too_metadata` for existing targets.
+- Cross-match the new targets, creating entries in `catalogdb.catalog` and `catalogdb.catalog_to_too_target`.
+- Run the `too` carton.
+
+### Dumping active ToOs
+
+To create a Parquet file with a list of ToOs that are active (ready to be observed, not expired, and not completed), use
+
+```bash
+too dump <FILE>
+```
+
+This command will create the Parquet file and add the bright neighbour and magnitude limit validation columns. The resulting file has the format required by [jaeger](https://github.com/sdss/jaeger) to perform the replacement of science targets with ToOs.
