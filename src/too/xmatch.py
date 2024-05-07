@@ -83,7 +83,7 @@ TOO_XMATCH_CONFIG = {
 
 def xmatch_too_targets(
     database: PeeweeDatabaseConnection,
-    version_plan: str | None = None,
+    plan: str | None = None,
     dry_run: bool = False,
     overwrite=False,
     keep_temp: bool = False,
@@ -105,8 +105,8 @@ def xmatch_too_targets(
     ----------
     database
         The database connection to use.
-    version_plan
-        The version plan to use. Defaults to the latest plan.
+    plan
+        The cross-match plan to use. Defaults to ``TOO_XMATCH_PLAN``.
     dry_run
         Whether to load the ``catalog`` and ``catalog_to_too_target`` tables after
         the cross-match.
@@ -149,12 +149,14 @@ def xmatch_too_targets(
         schema=too_target_schema,
     ), f"Table {too_rel_fqtn} does not exist."
 
-    # Get version_id. This is all a bit silly since version_id has to be 31/1.0.0.
-    if version_plan is None:
-        version_id: int = Version.select(peewee.fn.MAX(Version.id)).scalar()
-    else:
-        version_id: int = Version.get(plan=version_plan).id
+    plan_config = TOO_XMATCH_CONFIG.copy()
+    plan_config["1.2.0"]["debug"] = log.sh.level
 
+    plan = plan or TOO_XMATCH_PLAN
+    version_id: int = plan_config[plan]["version_id"]
+
+    # This is just a sanity check. We need to use version_id=31 and maybe we should
+    # just hardcode it.
     assert version_id == 31, "version_id must be 31 to allow using sdss_id."
 
     too_unmatched = polars.read_database_uri(
@@ -175,13 +177,10 @@ def xmatch_too_targets(
         log.warning("All ToO targets are already matched.")
         return
 
-    plan_config = TOO_XMATCH_CONFIG.copy()
-    plan_config["1.2.0"]["debug"] = log.sh.level
-
     # Create the XMatch instance here. We'll need it to get the relational model.
     xmatch_planner = XMatchPlanner.read(
         database,
-        plan=TOO_XMATCH_PLAN,
+        plan=plan,
         config_file=TOO_XMATCH_CONFIG,
         log=log,
         log_path=None,
