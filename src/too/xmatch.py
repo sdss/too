@@ -124,11 +124,8 @@ def xmatch_too_targets(
 
     """
 
-    from sdssdb.peewee.sdss5db.catalogdb import ToO_Target, Version
-    from target_selection import log as ts_log
+    from sdssdb.peewee.sdss5db.catalogdb import ToO_Target
     from target_selection.xmatch import XMatchPlanner
-
-    ts_log.setLevel(10000)  # Disable target_selection logging
 
     assert database.connected, "Database is not connected"
 
