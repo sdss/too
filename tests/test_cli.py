@@ -113,3 +113,12 @@ def test_cli_dump(tmp_path: pathlib.Path):
 
     assert result.exit_code == 0
     assert tmp_file.exists()
+
+
+def test_cli_validate(files_path: pathlib.Path, too_mock: polars.DataFrame):
+    too_mock[150000:200000].clone().write_parquet(files_path / "too.parquet")
+
+    runner = CliRunner()
+    result = runner.invoke(too_cli, ["validate", str(files_path / "too.parquet")])
+
+    assert result.exit_code == 0
