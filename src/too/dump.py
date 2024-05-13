@@ -159,8 +159,8 @@ def dump_to_parquet(
     df_field = match_fields(dataframe, database)
     df_observatory = df_field.filter(polars.col.observatory == observatory)
 
-    hist = dataframe["jd"].to_numpy()
-    start = dataframe["observe_from_mjd"].to_numpy()
+    hist = df_observatory["jd"].to_numpy()
+    start = df_observatory["observe_from_mjd"].to_numpy()
     n_done = [len(numpy.where(h > s)[0]) for h, s in zip(hist, start)]
     n_requested = df_observatory["n_exposures"].to_numpy()
     elligible = df_observatory.filter(numpy.greater(n_requested, n_done)).sort("too_id")
