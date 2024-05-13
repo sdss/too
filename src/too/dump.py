@@ -45,7 +45,7 @@ def dump_to_parquet(
     observatory = observatory.upper()
     if observatory not in ["APO", "LCO"]:
         raise ValueError("Invalid observatory.")
-    
+
     os.environ["OBSERVATORY"] = observatory.upper()
 
     from sdssdb.peewee.sdss5db import catalogdb, opsdb
