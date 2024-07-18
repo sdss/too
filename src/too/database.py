@@ -155,7 +155,7 @@ def load_too_targets(
         log.info("Updating ToO entries in catalogdb.too_metadata.")
 
         # First get the current metadata.
-        too_metadata = polars.read_database(
+        too_metadata = polars.read_database_uri(
             "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
             database_uri,
             engine="adbc",
@@ -168,7 +168,7 @@ def load_too_targets(
         too_metadata = too_metadata.update(
             too_metadata_new,
             on="too_id",
-            how="outer",
+            how="full",
             include_nulls=True,
         )
 
