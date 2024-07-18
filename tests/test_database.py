@@ -152,7 +152,7 @@ def test_update_too_targets(
     too_mock_sample = too_mock[0:1000]
 
     database_uri = database_uri_from_connection(catalogdb.database)
-    db_metadata = polars.read_database(
+    db_metadata = polars.read_database_uri(
         "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
         database_uri,
         engine="adbc",
@@ -168,7 +168,7 @@ def test_update_too_targets(
 
     assert "Updating ToO entries" in caplog.record_tuples[-2][2]
 
-    db_metadata = polars.read_database(
+    db_metadata = polars.read_database_uri(
         "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
         database_uri,
         engine="adbc",

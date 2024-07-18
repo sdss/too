@@ -320,14 +320,6 @@ CREATE TABLE opsdb_apo.configuration (
     epoch DOUBLE PRECISION,
     calibration_version TEXT);
 
-CREATE TABLE opsdb_apo.configuration (
-    configuration_id SERIAL PRIMARY KEY NOT NULL,
-    design_id INTEGER,
-    comment TEXT,
-    temperature TEXT,
-    epoch DOUBLE PRECISION,
-    calibration_version TEXT);
-
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
 ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
 ALTER TABLE catalogdb.catalog_to_gaia_dr3_source ADD PRIMARY KEY (catalogid, target_id, version_id);
