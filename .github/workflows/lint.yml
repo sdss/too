@@ -30,8 +30,4 @@ jobs:
         run: |
           pip install ruff
           ruff src/too tests/
-
-      - name: Lint with black
-        run: |
-          pip install black
-          black --check src/too tests/
+          ruff format --check src/too tests/

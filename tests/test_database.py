@@ -28,7 +28,6 @@ from too.database import (
 
 
 if TYPE_CHECKING:
-
     pass
 
 
@@ -88,7 +87,6 @@ def test_get_database_uri(
     port: int | None,
     expected: str,
 ):
-
     uri = get_database_uri(
         dbname,
         user=user,
@@ -126,7 +124,6 @@ def test_load_too_targets_from_file(
     tmp_path,
     extension: str,
 ):
-
     too_mock_sample = too_mock[0:1000]
 
     if extension == "parquet":

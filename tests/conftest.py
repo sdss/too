@@ -96,7 +96,6 @@ def truncate_too_target():
 
 @pytest.fixture(scope="session")
 def too_mock():
-
     random.seed(SEED)
     numpy.random.seed(SEED)
     polars.set_random_seed(SEED)

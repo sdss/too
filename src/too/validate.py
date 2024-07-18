@@ -180,7 +180,6 @@ class DesignMode:
     """
 
     def __init__(self, database: PeeweeDatabaseConnection, label: str | None = None):
-
         from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
 
         DesignModeDB._meta.database(database)  # type:ignore

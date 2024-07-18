@@ -21,7 +21,6 @@ from too.__main__ import too_cli
 
 @pytest.fixture(scope="module")
 def files_path(tmp_path_factory: pytest.TempPathFactory):
-
     yield tmp_path_factory.mktemp("too_files")
 
 
