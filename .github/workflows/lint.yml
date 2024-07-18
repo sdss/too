@@ -29,5 +29,5 @@ jobs:
       - name: Lint with ruff
         run: |
           pip install ruff
-          ruff src/too tests/
+          ruff check src/too tests/
           ruff format --check src/too tests/
