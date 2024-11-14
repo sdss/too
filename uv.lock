@@ -1365,7 +1365,7 @@ wheels = [
 [[package]]
 name = "sdss-target-selection"
 version = "1.3.17a0"
-source = { git = "https://github.com/sdss/target_selection.git?branch=sdss_id_zway_gallegoj#9031b9dfa454b487bcc3b92c9016b822e72eca10" }
+source = { git = "https://github.com/sdss/target_selection.git?branch=main#d67ade91d6d39de164e8e5bb2c4657dffeaf5ad2" }
 dependencies = [
     { name = "adbc-driver-postgresql" },
     { name = "astropy" },
@@ -1432,7 +1432,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=18.0.0" },
     { name = "rich", specifier = ">=13.7.0" },
     { name = "sdss-coordio", specifier = ">=1.13.0" },
-    { name = "sdss-target-selection", git = "https://github.com/sdss/target_selection.git?branch=sdss_id_zway_gallegoj" },
+    { name = "sdss-target-selection", git = "https://github.com/sdss/target_selection.git?branch=main" },
     { name = "sdssdb", specifier = ">=0.12.2" },
     { name = "sdsstools", specifier = ">=1.8.2" },
 ]

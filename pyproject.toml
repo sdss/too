@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "sdss_id_zway_gallegoj" }
+sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "main" }
 
 [project.urls]
 Homepage = "https://github.com/sdss/too"
