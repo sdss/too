@@ -1,44 +1,55 @@
-[tool.poetry]
+[project]
 name = "sdss-too"
 version = "0.1.0a0"
 description = "Targets of Opportunity (ToO) for SDSS-V"
-authors = ["José Sánchez-Gallego <gallegoj@uw.edu>"]
-license = "BSD-3-Clause"
+authors = [ { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" } ]
+license = { text = "BSD-3-Clause" }
 readme = "README.md"
-homepage = "https://github.com/sdss/too"
-repository = "https://github.com/sdss/too"
-documentation = "https://sdss-too.readthedocs.org"
-keywords = ["astronomy", "software"]
-packages = [
-    { include = "too", from = "src" }
-]
 include = []
-scripts = { "too" = "too.__main__:too_cli" }
 
-[tool.poetry.dependencies]
-python = "^3.12,<4.0"
-sdsstools = "^1.8.1"
-sdss-target-selection = "^1.2.2"
-adbc-driver-postgresql = "^1.1.0"
-polars = "^1.2.0"
-httpx = "^0.27.0"
-rich = "^13.7.0"
-sdssdb = ">=0.11.4"
-pyarrow = ">=15.0.0"
-click-option-group = "^0.5.6"
-astropy-healpix = "^1.0.2"
-astropy = "^6.0.0"
-sdss-coordio = "^1.10.0"
+requires-python = ">=3.12,<3.13"
 
-[tool.poetry.group.dev.dependencies]
-ipython = ">=8.21.0"
-ipdb = ">=0.12.3"
-ruff = ">=0.1.0"
-pytest = ">=8.0.0"
-pytest-sugar = ">=1.0.0"
-pytest-cov = ">=4.1.0"
-coverage = ">=7.4.1"
-pytest-mock = ">=3.14.0"
+dependencies = [
+    "sdsstools>=1.8.2",
+    "sdss-target-selection",
+    "adbc-driver-postgresql>=1.2.0",
+    "polars>=1.13.1",
+    "httpx>=0.27.0",
+    "rich>=13.7.0",
+    "sdssdb>=0.12.2",
+    "pyarrow>=18.0.0",
+    "click-option-group>=0.5.6",
+    "astropy-healpix>=1.0.2",
+    "astropy>=6.0.0",
+    "sdss-coordio>=1.13.0"
+]
+
+[tool.uv.sources]
+sdss-target-selection = { git = "https://github.com/sdss/target_selection.git", branch = "sdss_id_zway_gallegoj" }
+
+[project.urls]
+Homepage = "https://github.com/sdss/too"
+Repository = "https://github.com/sdss/too"
+Documentation = "https://sdss-too.readthedocs.org"
+
+[project.scripts]
+too = "too.__main__:too_cli"
+
+[dependency-groups]
+dev = [
+    "ipython>=8.21.0",
+    "ipdb>=0.12.3",
+    "ruff>=0.1.0",
+    "pytest>=8.0.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-cov>=4.1.0",
+    "coverage>=7.4.1",
+    "pytest-mock>=3.14.0"
+]
+
+[tool.uv]
+package = true
+default-groups = ["dev"]
 
 [tool.ruff]
 line-length = 88
@@ -59,11 +70,12 @@ section-order = ["future", "standard-library", "typing", "third-party", "sdss", 
 
 [tool.ruff.lint.isort.sections]
 typing = ["typing"]
-sdss = ["sdsstools", "clu", "target_selection", "sdssdb", "coordio"]
+sdss = ["sdsstools", "target_selection", "sdssdb", "coordio"]
 
 [tool.pytest.ini_options]
 addopts = "--cov too --cov-report xml --cov-report html --cov-report term -W ignore"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 branch = true
@@ -81,5 +93,11 @@ exclude_lines = [
 ]
 
 [build-system]
-requires = ["poetry-core>=1.1.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/too"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/too"]

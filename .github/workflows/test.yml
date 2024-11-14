@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -34,7 +39,7 @@ jobs:
           key: ${{ runner.os }}-config-sdss
 
       - name: Install Postgresql
-        uses: ikalnytskyi/action-setup-postgres@v6
+        uses: ikalnytskyi/action-setup-postgres@v7
         with:
           username: sdss
         id: postgres
@@ -60,20 +65,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade wheel pip setuptools
-          pip install -e .
+          uv sync --no-dev --frozen
 
       - name: Populate database
         run: |
           cd tests/scripts
-          python create_test_database.py
+          uv run python create_test_database.py
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 
       - name: Test with pytest
         run: |
-          pip install pytest pytest-sugar pytest-cov coverage pytest-mock
-          pytest tests/
+          uv pip install pytest pytest-sugar pytest-cov coverage pytest-mock
+          uv run pytest tests/
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
 

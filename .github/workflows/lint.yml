@@ -9,13 +9,10 @@ on:
       - 'docs/**'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  lint:
+    name: Lint
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.12']
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -23,11 +20,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Lint with ruff
         run: |
           pip install ruff
-          ruff check src/too tests/
-          ruff format --check src/too tests/
+          ruff check src/ tests/
+          ruff format --check src/ tests/
