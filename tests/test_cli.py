@@ -12,7 +12,7 @@ import pathlib
 
 import polars
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from sdssdb.peewee.sdss5db import catalogdb, targetdb
 

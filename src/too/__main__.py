@@ -8,119 +8,118 @@
 
 from __future__ import annotations
 
-import functools
-import sys
+import enum
+import pathlib
 
-import click
+from typing import Annotated
+
 import polars
-from click_option_group import OptionGroup
-
-from too import (
-    connect_to_database,
-    dump_to_parquet,
-    load_too_targets,
-    log,
-    read_too_file,
-    run_too_carton,
-    too_dtypes,
-    validate_too_targets,
-    xmatch_too_targets,
-)
-from too.exceptions import ValidationError
+import typer
+from typer.core import TyperGroup
 
 
-run_option_group = OptionGroup(
-    "Run options",
-    help="Options for loading ToO targets and running the too carton.",
-)
-server_option_group = OptionGroup(
-    "Server options",
-    help="Options for connecting to the database server.",
+class NaturalOrderGroup(TyperGroup):
+    """A Typer group that lists commands in order of definition."""
+
+    def list_commands(self, ctx):
+        return self.commands.keys()
+
+
+too_cli = typer.Typer(
+    cls=NaturalOrderGroup,
+    rich_markup_mode="rich",
+    context_settings={"obj": {}},
+    no_args_is_help=True,
+    help="Command line interface for ToOs.",
 )
 
-
-def server_options(f):
-    @server_option_group.option(
-        "--dbname",
-        default="sdss5db",
-        help="The name of the database to connect to.",
-    )
-    @server_option_group.option(
-        "--host",
-        default="localhost",
-        help="The host of the database server.",
-    )
-    @server_option_group.option(
-        "--port",
-        default=None,
-        help="The port of the database server.",
-    )
-    @server_option_group.option(
-        "--user",
-        default="sdss",
-        help="The user to connect to the database.",
-    )
-    @functools.wraps(f)
-    def wrapper_server_options(*args, **kwargs):
-        return f(*args, **kwargs)
-
-    return wrapper_server_options
+dbname = typer.Option(
+    help="The name of the database to connect to.",
+    rich_help_panel="Options for connecting to the database server",
+)
+host = typer.Option(
+    help="The host of the database server.",
+    rich_help_panel="Options for connecting to the database server",
+)
+port = typer.Option(
+    help="The port of the database server.",
+    rich_help_panel="Options for connecting to the database server",
+)
+user = typer.Option(
+    help="The user to connect to the database.",
+    rich_help_panel="Options for connecting to the database server",
+)
 
 
-@click.group()
-def too_cli():
-    """Command line interface for ToOs."""
-
-    pass
+class Observatories(enum.Enum):
+    APO = "APO"
+    LCO = "LCO"
 
 
 @too_cli.command()
-@click.argument("FILES", type=click.Path(exists=True), nargs=-1)
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Prints more information.",
-)
-@click.option(
-    "--write-log",
-    type=click.Path(),
-    help="Path where to write the log file.",
-)
-@server_options
-@run_option_group.option(
-    "--cross-match/--no-cross-match",
-    default=True,
-    help="Cross-match the input files. "
-    "If --no-cross-match is passed, the carton is not run.",
-)
-@run_option_group.option(
-    "--run-carton/--no-run-carton",
-    default=True,
-    help="Run the carton after cross-matching.",
-)
 def process(
-    files: tuple[str],
-    cross_match: bool = True,
-    run_carton: bool = True,
-    dbname: str = "sdss5db",
-    host: str = "localhost",
-    port: int | None = None,
-    user: str = "sdss",
-    verbose: bool = False,
-    write_log: str | None = None,
+    files: Annotated[
+        list[pathlib.Path] | None,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            help="The list of files to process.",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option("-v", "--verbose", help="Prints more information."),
+    ] = False,
+    write_log: Annotated[
+        pathlib.Path | None,
+        typer.Option(help="Path where to write the log file."),
+    ] = None,
+    dbname: Annotated[str, dbname] = "sdss5db",
+    host: Annotated[str, host] = "localhost",
+    port: Annotated[int | None, port] = None,
+    user: Annotated[str, user] = "sdss",
+    cross_match: Annotated[
+        bool,
+        typer.Option(
+            help="Cross-match the input files."
+            "If --no-cross-match is passed, the carton is not run.",
+            rich_help_panel="Options for loading ToOs and running the too carton.",
+        ),
+    ] = True,
+    run_carton: Annotated[
+        bool,
+        typer.Option(
+            help="Run the carton after cross-matching.",
+            rich_help_panel="Options for loading ToOs and running the too carton.",
+        ),
+    ] = True,
 ):
     """Ingest and process new lists of ToOs."""
+
+    from too import (
+        connect_to_database,
+        load_too_targets,
+        log,
+        read_too_file,
+        run_too_carton,
+        too_dtypes,
+        xmatch_too_targets,
+    )
 
     if verbose:
         log.sh.setLevel("DEBUG")
 
     if write_log:
-        log.start_file_logger(write_log, rotating=False)
+        log.start_file_logger(str(write_log), rotating=False)
 
-    database = connect_to_database(dbname, host=host, port=port, user=user)
+    database = connect_to_database(
+        dbname,
+        host=host,
+        port=port,
+        user=user,
+    )
 
-    if len(files) > 0:
+    if files is not None and len(files) > 0:
         log.debug("Reading input files.")
         targets = polars.DataFrame({}, schema=too_dtypes)
         for file in files:
@@ -139,36 +138,33 @@ def process(
 
 
 @too_cli.command()
-@click.argument("FILE", type=str)
-@click.option(
-    "--observatory",
-    type=click.Choice(["APO", "LCO"], case_sensitive=False),
-    help="The observatory for which to dump the ToO targets.",
-    required=True,
-)
-@server_options
 def dump(
-    file: str,
-    observatory: str,
-    dbname: str = "sdss5db",
-    host: str = "localhost",
-    port: int | None = None,
-    user: str = "sdss",
+    file: Annotated[str, typer.Argument(help="The file to dump the ToO targets into.")],
+    observatory: Annotated[
+        Observatories,
+        typer.Option(help="The observatory for which to dump the ToO targets."),
+    ],
+    dbname: Annotated[str, dbname] = "sdss5db",
+    host: Annotated[str, host] = "localhost",
+    port: Annotated[int | None, port] = None,
+    user: Annotated[str, user] = "sdss",
 ):
     """Dumps the current ToO targets into a Parquet file."""
 
+    from too import connect_to_database, dump_to_parquet
+
     database = connect_to_database(dbname, host=host, port=port, user=user)
-    dump_to_parquet(observatory.upper(), file, database=database)
-
-
-if __name__ == "__main__":
-    too_cli()
+    dump_to_parquet(observatory.value.upper(), file, database=database)
 
 
 @too_cli.command()
-@click.argument("FILE", type=str)
-def validate(file: str):
+def validate(file: Annotated[str, typer.Argument(help="The file to validate.")]):
     """Validates a ToO file."""
+
+    import sys
+
+    from too import log, read_too_file, validate_too_targets
+    from too.exceptions import ValidationError
 
     df = read_too_file(file)
 
@@ -180,3 +176,7 @@ def validate(file: str):
     except Exception as ee:
         log.error(f"Unexpected error: {ee}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    too_cli()
