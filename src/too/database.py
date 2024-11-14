@@ -11,7 +11,6 @@ from __future__ import annotations
 import datetime
 import os
 import pathlib
-
 from typing import TYPE_CHECKING
 
 import polars
@@ -20,7 +19,6 @@ from too import log
 from too.datamodel import too_dtypes, too_metadata_columns
 from too.tools import read_too_file
 from too.validate import validate_too_targets
-
 
 if TYPE_CHECKING:
     from sdssdb.connection import PeeweeDatabaseConnection
@@ -159,6 +157,10 @@ def load_too_targets(
             "SELECT * FROM catalogdb.too_metadata ORDER BY too_id",
             database_uri,
             engine="adbc",
+        ).with_columns(
+            last_modified_date=polars.col.last_modified_date.cast(
+                polars.Datetime(time_zone="UTC")
+            )
         )
 
         # Update the metadata dataframe.

@@ -11,7 +11,6 @@ from __future__ import annotations
 import collections
 import os
 import warnings
-
 from typing import TYPE_CHECKING, Tuple
 
 import astropy.units as u
@@ -25,7 +24,6 @@ from too import log
 from too.datamodel import mag_columns, too_dtypes
 from too.exceptions import ValidationError
 from too.tools import match_fields
-
 
 if TYPE_CHECKING:
     from sdssdb import PeeweeDatabaseConnection
@@ -432,7 +430,6 @@ def bn_validation(
     """
 
     from astropy_healpix import HEALPix
-
     from coordio.utils import _offset_radec
 
     log.debug(
@@ -686,14 +683,14 @@ def validate_too_targets(
     # This is equivalent to Pandas .drop(axis=1). In Polars is a bit harder. See
     # https://github.com/pola-rs/polars/issues/1613
     mag_data = targets[mag_columns]
-    any_mags = mag_data.filter(
-        ~polars.fold(
+    any_mags = mag_data.with_columns(
+        no_mags=polars.fold(
             True,
             lambda acc, s: acc & s.is_null(),
             polars.all(),
         )
     )
-    if len(any_mags) < n_targets:
+    if len(any_mags.filter(polars.col.no_mags.not_())) < n_targets:
         raise ValidationError(
             "ToOs found with missing magnitudes. "
             "At least one magnitude value is required."
