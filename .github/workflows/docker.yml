@@ -60,6 +60,7 @@ jobs:
           push: true
           provenance: false
           tags: ghcr.io/${{ steps.set-tags.outputs.TAGS }}
+          file: ./container/Dockerfile
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
