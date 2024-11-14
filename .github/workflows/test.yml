@@ -55,6 +55,7 @@ jobs:
           sudo make install
         env:
           PGSERVICE: ${{ steps.postgres.outputs.service-name }}
+          CFLAGS: -I/usr/include/postgresql/14/server
 
       - name: Create database
         run: |
