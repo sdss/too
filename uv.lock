@@ -1365,7 +1365,7 @@ wheels = [
 [[package]]
 name = "sdss-target-selection"
 version = "1.3.17a0"
-source = { git = "https://github.com/sdss/target_selection.git?branch=sdss_id_zway_gallegoj#b78db2405e7dd78d3557ca5535cf6bfa26f42288" }
+source = { git = "https://github.com/sdss/target_selection.git?branch=sdss_id_zway_gallegoj#9031b9dfa454b487bcc3b92c9016b822e72eca10" }
 dependencies = [
     { name = "adbc-driver-postgresql" },
     { name = "astropy" },
