@@ -11,6 +11,7 @@ from __future__ import annotations
 import collections
 import os
 import warnings
+
 from typing import TYPE_CHECKING, Tuple
 
 import astropy.units as u
@@ -24,6 +25,7 @@ from too import log
 from too.datamodel import mag_columns, too_dtypes
 from too.exceptions import ValidationError
 from too.tools import match_fields
+
 
 if TYPE_CHECKING:
     from sdssdb import PeeweeDatabaseConnection
@@ -430,6 +432,7 @@ def bn_validation(
     """
 
     from astropy_healpix import HEALPix
+
     from coordio.utils import _offset_radec
 
     log.debug(

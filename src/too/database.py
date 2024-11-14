@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime
 import os
 import pathlib
+
 from typing import TYPE_CHECKING
 
 import polars
@@ -19,6 +20,7 @@ from too import log
 from too.datamodel import too_dtypes, too_metadata_columns
 from too.tools import read_too_file
 from too.validate import validate_too_targets
+
 
 if TYPE_CHECKING:
     from sdssdb.connection import PeeweeDatabaseConnection
