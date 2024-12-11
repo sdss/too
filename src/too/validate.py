@@ -150,7 +150,7 @@ class DesignMode:
         for each instrument ('APOGEE' and 'BOSS').
         The FOV metric is described by three parameters, the
         nth neighbor to get distances to, the percentle distance
-        to calculate and the distace to compare against for validation
+        to calculate and the distance to compare against for validation
         (in mm).
 
     stds_mags: dict
