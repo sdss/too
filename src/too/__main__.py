@@ -13,7 +13,6 @@ import pathlib
 
 from typing import Annotated
 
-import polars
 import typer
 from typer.core import TyperGroup
 
@@ -95,6 +94,8 @@ def process(
     ] = True,
 ):
     """Ingest and process new lists of ToOs."""
+
+    import polars
 
     from too import (
         connect_to_database,
