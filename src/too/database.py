@@ -103,7 +103,7 @@ def load_too_targets(
 
     now = datetime.datetime.now(datetime.UTC)
 
-    targets = read_too_file(targets)
+    targets = read_too_file(targets, cast=True)
     targets = validate_too_targets(targets, database)
 
     too_columns = ["too_id"]

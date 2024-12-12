@@ -124,7 +124,7 @@ def process(
         log.debug("Reading input files.")
         targets = polars.DataFrame({}, schema=too_dtypes)
         for file in files:
-            targets = targets.vstack(read_too_file(file))
+            targets = targets.vstack(read_too_file(file, cast=True))
 
         log.info("Loading targets into the database.")
         load_too_targets(targets, database, update_existing=True)
