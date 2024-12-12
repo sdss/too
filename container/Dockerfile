@@ -1,7 +1,7 @@
 FROM python:3.12-slim-bullseye
 
-MAINTAINER Jose Sanchez-Gallego, gallegoj@uw.edu
-LABEL org.opencontainers.image.source https://github.com/sdss/too
+LABEL org.opencontainers.image.authors="Jose Sanchez-Gallego, gallegoj@uw.edu"
+LABEL org.opencontainers.image.source=https://github.com/sdss/too
 
 WORKDIR /opt
 
