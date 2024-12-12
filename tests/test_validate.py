@@ -37,7 +37,8 @@ def test_validate_too_target_passes(
 @pytest.mark.parametrize(
     "test_mode,error_message",
     [
-        ("too_id", "Duplicate too_id in ToO targets."),
+        ("too_id_duplicate", "Duplicate too_id in ToO targets."),
+        ("too_id_null", "Null too_id found in ToO targets."),
         ("schema", "Invalid schema for ToO targets."),
         ("radec_null", "Null ra/dec found in ToO targets."),
         ("radec_invalid", "Invalid ra or dec found in ToO targets."),
@@ -58,8 +59,10 @@ def test_validate_too_target_fails(
 ):
     too_mock_test = too_mock.clone()
 
-    if test_mode == "too_id":
+    if test_mode == "too_id_duplicate":
         too_mock_test[0, "too_id"] = too_mock_test[1, "too_id"]
+    elif test_mode == "too_id_null":
+        too_mock_test[0, "too_id"] = None
     elif test_mode == "schema":
         too_mock_test.drop_in_place("too_id")
     elif test_mode == "radec_null":

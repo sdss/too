@@ -667,6 +667,9 @@ def validate_too_targets(
     if targets.unique("too_id").height != n_targets:
         raise ValidationError("Duplicate too_id in ToO targets.")
 
+    if targets["too_id"].has_nulls():
+        raise ValidationError("Null too_id found in ToO targets.")
+
     targets_coords = targets.select(["ra", "dec"]).drop_nulls()
     if len(targets_coords) < n_targets:
         raise ValidationError("Null ra/dec found in ToO targets.")

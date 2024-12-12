@@ -84,6 +84,8 @@ or via the CLI
 too validate sample.csv
 ```
 
+Note that `too validate` expects the schema of the input file to exactly match that of the ToO datamodel (for example, if the file contains a `too_id` column of type `Int32` the validation will fail even if the values do not overflow int32). You can pass the flag `--cast` to cast the columns to the correct types. This will fail if the input dataframe cannot be coerced to the correct types. When `too` runs the entire pipeline, the input file is always cast, which can lead to some data precision loss.
+
 For more details see [this wiki page](https://sdss-wiki.atlassian.net/wiki/x/hhTR). To regenerate the table above, run
 
 ```python

@@ -31,8 +31,21 @@ if TYPE_CHECKING:
 __all__ = ["download_file", "read_too_file", "match_fields"]
 
 
-def read_too_file(path: polars.DataFrame | pathlib.Path | str) -> polars.DataFrame:
-    """Reads a ToO file in CSV or parquet format."""
+def read_too_file(
+    path: polars.DataFrame | pathlib.Path | str,
+    cast: bool = False,
+) -> polars.DataFrame:
+    """Reads a ToO file in CSV or parquet format.
+
+    Parameters
+    ----------
+    path
+        The path to the file or the dataframe to read.
+    cast
+        If ``True``, casts the columns to the datamodel types. This may affect
+        the precision of the data.
+
+    """
 
     if isinstance(path, (str, pathlib.Path)):
         path = pathlib.Path(path)
@@ -40,12 +53,15 @@ def read_too_file(path: polars.DataFrame | pathlib.Path | str) -> polars.DataFra
         if path.suffix == ".parquet":
             targets = polars.read_parquet(path)
         elif path.suffix == ".csv":
-            targets = polars.read_csv(path, schema=too_dtypes)  # type: ignore
+            targets = polars.read_csv(path)  # type: ignore
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
 
     else:
         targets = path
+
+    if cast:
+        targets = targets.cast(too_dtypes)
 
     targets = targets.sort("too_id").select(list(too_dtypes))
     return targets

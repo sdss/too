@@ -159,7 +159,13 @@ def dump(
 
 
 @too_cli.command()
-def validate(file: Annotated[str, typer.Argument(help="The file to validate.")]):
+def validate(
+    file: Annotated[str, typer.Argument(help="The file to validate.")],
+    cast: Annotated[
+        bool,
+        typer.Option(help="Cast the columns to the datamodel types."),
+    ],
+):
     """Validates a ToO file."""
 
     import sys
@@ -167,7 +173,7 @@ def validate(file: Annotated[str, typer.Argument(help="The file to validate.")])
     from too import log, read_too_file, validate_too_targets
     from too.exceptions import ValidationError
 
-    df = read_too_file(file)
+    df = read_too_file(file, cast=cast)
 
     try:
         validate_too_targets(df)
