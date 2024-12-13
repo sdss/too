@@ -61,8 +61,9 @@ def process(
         list[pathlib.Path] | None,
         typer.Argument(
             exists=True,
-            dir_okay=False,
-            help="The list of files to process.",
+            dir_okay=True,
+            help="The list of files to process. If a directory is passed, all the "
+            "files in the directory will be processed.",
         ),
     ] = None,
     verbose: Annotated[
@@ -121,9 +122,17 @@ def process(
     )
 
     if files is not None and len(files) > 0:
-        log.debug("Reading input files.")
-        targets = polars.DataFrame({}, schema=too_dtypes)
+        process_files: list[pathlib.Path] = []
         for file in files:
+            if file.is_dir():
+                process_files.extend(file.glob("*.csv"))
+                process_files.extend(file.glob("*.parquet"))
+            else:
+                process_files.append(file)
+
+        log.debug(f"Reading {len(files)} input file(s).")
+        targets = polars.DataFrame({}, schema=too_dtypes)
+        for file in process_files:
             targets = targets.vstack(read_too_file(file, cast=True))
 
         log.info("Loading targets into the database.")

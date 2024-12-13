@@ -70,8 +70,7 @@ def test_cli_update(files_path: pathlib.Path, too_mock: polars.DataFrame):
             "sdss5db_too_test",
             "--write-log",
             str(files_path / "too.log"),
-            str(files_path / "too2.csv"),
-            str(files_path / "too3.parquet"),
+            str(files_path),
         ],
     )
 
