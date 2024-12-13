@@ -73,6 +73,7 @@ def create_test_database(
     files = [
         "catalog.csv.gz",
         "sdss_id_stacked.csv.gz",
+        "sdss_id_flat.csv.gz",
         # "catalog_to_sdss_dr13_photoobj_primary.csv.gz",
         "catalog_to_gaia_dr3_source.csv.gz",
         "catalog_to_twomass_psc.csv.gz",
