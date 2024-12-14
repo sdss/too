@@ -47,7 +47,8 @@ def test_validate_too_target_passes(
         ("mag_columns", "ToOs found with missing magnitudes"),
         ("fiber_type", "Invalid fiber_type values."),
         ("can_offset", "Null 'can_offset' column values found"),
-        ("sky_brightness_mode", "Invalid sky_brightness_mode values found."),
+        ("sky_brightness_mode_invalid", "Invalid sky_brightness_mode values found."),
+        ("sky_brightness_mode_null", "Null sky_brightness_mode found in ToO targets."),
     ],
 )
 def test_validate_too_target_fails(
@@ -81,8 +82,10 @@ def test_validate_too_target_fails(
         too_mock_test[0, "fiber_type"] = "INVALID"
     elif test_mode == "can_offset":
         too_mock_test[0, "can_offset"] = None
-    elif test_mode == "sky_brightness_mode":
+    elif test_mode == "sky_brightness_mode_invalid":
         too_mock_test[0, "sky_brightness_mode"] = "INVALID"
+    elif test_mode == "sky_brightness_mode_null":
+        too_mock_test[0, "sky_brightness_mode"] = None
 
     with pytest.raises(ValidationError, match=error_message):
         validate_too_targets(too_mock_test, database)

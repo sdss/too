@@ -677,6 +677,9 @@ def validate_too_targets(
     if targets["too_id"].has_nulls():
         raise ValidationError("Null too_id found in ToO targets.")
 
+    if targets["sky_brightness_mode"].has_nulls():
+        raise ValidationError("Null sky_brightness_mode found in ToO targets.")
+
     targets_coords = targets.select(["ra", "dec"]).drop_nulls()
     if len(targets_coords) < n_targets:
         raise ValidationError("Null ra/dec found in ToO targets.")
