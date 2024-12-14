@@ -105,11 +105,6 @@ def load_too_targets(
     now = datetime.datetime.now(datetime.UTC)
 
     targets = read_too_file(targets, cast=True)
-    targets = targets.with_columns(
-        g_mag=polars.lit(15, polars.Float32),
-        r_mag=polars.lit(15, polars.Float32),
-    )
-
     targets = deduplicate_too_targets(targets)
     targets = validate_too_targets(
         targets,
