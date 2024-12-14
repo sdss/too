@@ -12,12 +12,16 @@ import os
 import pathlib
 import shutil
 import tempfile
+from datetime import datetime
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
+import numpy
 import polars
 import rich.progress
+
+from sdsstools import get_sjd
 
 from too.datamodel import too_dtypes
 from too.exceptions import ValidationError
@@ -208,3 +212,53 @@ def match_fields(
                 )
 
     return targets
+
+
+def create_mock_catalogue(
+    data: polars.DataFrame | dict[str, Any]
+) -> polars.DataFrame:  # pragma: no cover
+    """Tool to generate fake ToO input files with correct values."""
+
+    if isinstance(data, dict):
+        data = polars.DataFrame(data)
+
+    assert isinstance(data, polars.DataFrame)
+
+    for column in too_dtypes:
+        if column not in data.columns:
+            if column == "too_id":
+                col_data = numpy.arange(len(data))
+            elif column == "fiber_type":
+                col_data = ["APOGEE"] * len(data)
+            elif column == "sky_brightness_mode":
+                col_data = ["bright"] * len(data)
+            elif column == "ra":
+                col_data = numpy.random.uniform(0, 360, len(data))
+            elif column == "dec":
+                col_data = numpy.random.uniform(-90, 90, len(data))
+            elif column == "can_offset":
+                col_data = [False] * len(data)
+            elif column == "n_exposures":
+                col_data = [1] * len(data)
+            elif column == "priority":
+                col_data = [5] * len(data)
+            elif column == "active":
+                col_data = [True] * len(data)
+            elif column == "observe_from_mjd":
+                col_data = [get_sjd("APO")] * len(data)
+            elif column == "observe_until_mjd":
+                col_data = [get_sjd("APO") + 10] * len(data)
+            elif column == "observed":
+                col_data = [False] * len(data)
+            elif column == "added_on":
+                col_data = [datetime.now().isoformat().split("T")[0]] * len(data)
+            else:
+                col_data = [None] * len(data)
+
+            data = data.with_columns(
+                **{column: polars.Series(col_data, dtype=too_dtypes[column])}
+            )
+
+    data = data.cast(too_dtypes).select(too_dtypes.keys()).sort("added_on", "too_id")
+
+    return data
