@@ -215,7 +215,7 @@ def match_fields(
 
 
 def create_mock_catalogue(
-    data: polars.DataFrame | dict[str, Any]
+    data: polars.DataFrame | dict[str, Any],
 ) -> polars.DataFrame:  # pragma: no cover
     """Tool to generate fake ToO input files with correct values."""
 
