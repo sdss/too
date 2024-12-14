@@ -131,7 +131,7 @@ def process(
             else:
                 process_files.append(file)
 
-        log.debug(f"Reading {len(files)} input file(s).")
+        log.debug(f"Reading {len(process_files)} input file(s).")
         targets = polars.DataFrame({}, schema=too_dtypes)
         for file in process_files:
             targets = targets.vstack(read_too_file(file, cast=True))
