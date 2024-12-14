@@ -99,6 +99,15 @@ def create_test_database(
         cwd=CACHE_PATH,
     )
 
+    # Create empty tables
+    empty_table_sql = (pathlib.Path(__file__).parent / "empty_tables").glob("*.sql")
+    for sql_file in empty_table_sql:
+        subprocess.run(
+            f"psql -d {DBNAME} -f {sql_file!s}",
+            shell=True,
+            cwd=CACHE_PATH,
+        )
+
 
 if __name__ == "__main__":
     create_test_database()

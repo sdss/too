@@ -12,7 +12,7 @@ import collections
 import os
 import warnings
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Literal, Tuple
 
 import astropy.units as u
 import numpy as np
@@ -20,6 +20,7 @@ import polars
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from erfa import ErfaWarning
+from polars import selectors
 
 from too import log
 from too.datamodel import mag_columns, too_dtypes
@@ -538,7 +539,7 @@ def mag_limit_check(
         offset_flags from offset function
     mag_metric: np.array
         the magnitude limits for the specific designmode
-        and isntrument
+        and intrument
     Return
     ------
     valid_too_mag_lim: np.array
@@ -562,7 +563,9 @@ def mag_limit_check(
             for j, ind in enumerate(check_inds):
                 # check the magntiude for this assignment
                 targ_check[j], _ = check_assign_mag_limit(
-                    mag_metric[ind][0], mag_metric[ind][1], magnitudes[i][ind]
+                    mag_metric[ind][0],
+                    mag_metric[ind][1],
+                    magnitudes[i][ind],
                 )
             # if all True, then passes
             if np.all(targ_check):
@@ -632,6 +635,7 @@ def mag_lim_validation(
         offset_flag[ev_apogee],
         modes[design_mode].bright_limit_targets["APOGEE"],
     )
+
     return valid_too_mag_lim
 
 
@@ -639,6 +643,7 @@ def validate_too_targets(
     targets: polars.DataFrame,
     database: PeeweeDatabaseConnection | None = None,
     bright_limit_checks: bool = False,
+    bright_limit_mode: Literal["error", "discard"] = "discard",
 ):
     """Validates a list of ToO targets.
 
@@ -653,7 +658,9 @@ def validate_too_targets(
 
     If ``bright_limit_checks`` is ``True``, the function will also run the bright
     neighbour and bright limit checks and will fail if any of the targets do not pass
-    the checks.
+    the checks. When ``bright_limit_mode`` is set to 'error', the function will raise
+    a ``ValidationError`` if any of the targets do not pass the checks. Otherwise,
+    invalid rows will be discarded.
 
     """
 
@@ -702,19 +709,6 @@ def validate_too_targets(
             "At least one magnitude value is required."
         )
 
-    # Check that if one of the Sloan magnitudes is set, all are set.
-    sloan_mags = targets.select(polars.col("^[ugriz]_mag$"))
-    # Rows where at least one value is not null.
-    sloan_mags_not_null = sloan_mags.filter(
-        polars.fold(False, lambda a, b: a | b.is_not_null(), polars.all())
-    )
-    # Rows where at least one value is null.
-    sloan_mags_null = sloan_mags_not_null.filter(
-        polars.fold(False, lambda a, b: a | b.is_null(), polars.all())
-    )
-    if sloan_mags_null.height > 0:
-        raise ValidationError("Found rows with incomplete Sloan magnitudes.")
-
     if len(set(targets["fiber_type"].unique()) - set(["APOGEE", "BOSS"])) > 0:
         raise ValidationError(
             "Invalid fiber_type values. Valid values are 'APOGEE' and 'BOSS'."
@@ -733,6 +727,7 @@ def validate_too_targets(
     if len(targets_invalid_brightness_mode) > 0:
         raise ValidationError("Invalid sky_brightness_mode values found.")
 
+    invalid_bright_limits = set()
     if bright_limit_checks:
         if database is None:
             raise ValueError("Database connection is required for bright limit checks.")
@@ -741,18 +736,33 @@ def validate_too_targets(
         log.info("Running bright neighbour and magnitude limit checks.")
         bn_targets = add_bright_limits_columns(targets, database)
 
-        # Check if any targets failed the bright neighbour or magnitude limit checks.
-        bn_columns = bn_targets.select(polars.selectors.starts_with("bn_"))
-        bn_invalid = bn_targets.filter(~bn_columns.fold(lambda x, y: x & y))
+        # For the sky brightness mode of the target,
+        # check if the bright neighbour and magnitude limit.
+        for bmode in valid_brightness_modes:
+            bm_targets = bn_targets.filter(polars.col.sky_brightness_mode == bmode)
+            bn_cols = bm_targets.select(selectors.starts_with(f"bn_{bmode}"))
 
-        mag_lim_columns = bn_targets.select(polars.selectors.starts_with("mag_lim_"))
-        mag_lim_invalid = bn_targets.filter(~mag_lim_columns.fold(lambda x, y: x & y))
+            if len(bm_targets) == 0 or len(bn_cols) == 0:
+                continue
 
-        if len(bn_invalid) > 0 or len(mag_lim_invalid) > 0:
-            raise ValidationError(
-                f"{len(bn_invalid)} targets failed bright neighbour or "
-                "magnitude limit checks."
-            )
+            bn_invalid = bm_targets.filter(~bn_cols.fold(lambda x, y: x & y))
+
+            mag_lim_cols = bm_targets.select(selectors.starts_with(f"mag_lim_{bmode}"))
+            mag_lim_invalid = bm_targets.filter(~mag_lim_cols.fold(lambda x, y: x & y))
+
+            if len(bn_invalid) > 0 or len(mag_lim_invalid) > 0:
+                if bright_limit_mode == "error":
+                    raise ValidationError(
+                        f"{len(bn_invalid)} targets failed bright neighbour or "
+                        "magnitude limit checks."
+                    )
+                else:
+                    invalid_bright_limits |= set(bn_invalid["too_id"].to_list())
+                    invalid_bright_limits |= set(mag_lim_invalid["too_id"].to_list())
+                    log.warning(
+                        f"{len(invalid_bright_limits)} targets failed bright "
+                        f"neighbour or magnitude limit checks and have been discarded."
+                    )
 
     # Fill some optional columns.
     observe_from_now = polars.lit(get_sjd("APO"), dtype=polars.Int32)
@@ -766,7 +776,7 @@ def validate_too_targets(
         n_exposures=polars.col.n_exposures.fill_null(polars.lit(1, dtype=polars.Int16)),
         priority=polars.col.priority.fill_null(polars.lit(5, dtype=polars.Int16)),
         observe_from_mjd=polars.col.observe_from_mjd.fill_null(observe_from_now),
-    )
+    ).filter(polars.col.too_id.is_in(invalid_bright_limits).not_())
 
     return targets
 
@@ -874,8 +884,8 @@ def add_bright_limits_columns(
     # as in principle we should not be able to observe the targets in those modes.
     processed_df = polars.concat(processed, how="diagonal")
     processed_df = processed_df.with_columns(
-        polars.selectors.starts_with("bn_").fill_null(False),
-        polars.selectors.starts_with("mag_lim_").fill_null(False),
+        selectors.starts_with("bn_").fill_null(False),
+        selectors.starts_with("mag_lim_").fill_null(False),
     )
 
     return processed_df.sort("too_id")

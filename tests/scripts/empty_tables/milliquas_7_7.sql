@@ -1,0 +1,21 @@
+CREATE TABLE catalogdb.milliquas_7_7 (
+    ra double precision,
+    "dec" double precision,
+    name text,
+    type text,
+    rmag real,
+    bmag real,
+    comment text,
+    r text,
+    b text,
+    z real,
+    cite text,
+    zcite text,
+    rxpct smallint,
+    qpct smallint,
+    xname text,
+    rname text,
+    lobe1 text,
+    lobe2 text,
+    pk bigint NOT NULL
+);

@@ -74,6 +74,9 @@ def connect_and_revert_database(max_cid: int):
     execute_sql(f"DROP TABLE IF EXISTS sandbox.catalog_to_too_{mj5};")
     execute_sql(f"DELETE FROM catalogdb.catalog WHERE catalogid > {max_cid};")
 
+    execute_sql("DELETE FROM sandbox.sdss_id_flat WHERE sdss_id > 300000000;")
+    execute_sql("DELETE FROM sandbox.sdss_id_stacked WHERE sdss_id > 300000000;")
+
 
 @pytest.fixture(autouse=True)
 def mock_bn_validation(mocker: pytest_mock.MockerFixture):

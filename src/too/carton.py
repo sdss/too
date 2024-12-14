@@ -10,17 +10,23 @@ from __future__ import annotations
 
 import warnings
 
+from typing import TYPE_CHECKING
+
 from too import log
 
 
-__all__ = ["run_too_carton"]
+if TYPE_CHECKING:
+    from sdssdb.connection import PeeweeDatabaseConnection
+
+
+__all__ = ["run_too_carton", "update_sdss_id_tables"]
 
 
 TOO_TARGET_PLAN = "1.1.0"
 
 
 def run_too_carton():
-    """Runs the ToO carton."""
+    """Runs the ToO carton. Database connection must have already been set."""
 
     from target_selection import log as ts_log
     from target_selection.exceptions import TargetSelectionImportWarning
@@ -35,3 +41,26 @@ def run_too_carton():
 
     too_carton.run(overwrite=True)
     too_carton.load(mode="append")
+
+
+def update_sdss_id_tables(database: PeeweeDatabaseConnection):
+    """Updates the SDSS ID tables."""
+
+    from target_selection.sdss_id import append_to_sdss_id
+
+    log.info("Updating SDSS ID tables.")
+
+    apend_inst = append_to_sdss_id.AppendToTables(
+        database,
+        individual_table="catalogdb.catalog_to_too_target",
+    )
+
+    output_name = apend_inst.run_MetaXMatch(database)
+
+    apend_inst.create_temp_catalogid_lists(database, output_name)
+    apend_inst.create_sdss_id_stacked_addendum(database, output_name)
+    apend_inst.add_to_sdss_id_stacked(database)
+    apend_inst.create_sdss_id_flat_addendum(database)
+    apend_inst.add_to_sdss_id_flat(database)
+
+    log.info("SDSS ID tables have been updated.")

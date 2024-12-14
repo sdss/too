@@ -18,7 +18,7 @@ import polars
 
 from too import log
 from too.datamodel import too_dtypes, too_metadata_columns
-from too.tools import read_too_file
+from too.tools import deduplicate_too_targets, read_too_file
 from too.validate import validate_too_targets
 
 
@@ -95,6 +95,7 @@ def database_uri_from_connection(database: PeeweeDatabaseConnection):
 def load_too_targets(
     targets: polars.DataFrame | str | pathlib.Path,
     database: PeeweeDatabaseConnection,
+    validate_magnitude_limits: bool = False,
     update_existing: bool = False,
 ):
     """Loads a list of ToO targets into the database."""
@@ -104,7 +105,17 @@ def load_too_targets(
     now = datetime.datetime.now(datetime.UTC)
 
     targets = read_too_file(targets, cast=True)
-    targets = validate_too_targets(targets, database)
+    targets = targets.with_columns(
+        g_mag=polars.lit(15, polars.Float32),
+        r_mag=polars.lit(15, polars.Float32),
+    )
+
+    targets = deduplicate_too_targets(targets)
+    targets = validate_too_targets(
+        targets,
+        database,
+        bright_limit_checks=validate_magnitude_limits,
+    )
 
     too_columns = ["too_id"]
     too_columns += [col for col in too_dtypes if col not in too_metadata_columns]
@@ -124,7 +135,7 @@ def load_too_targets(
     if not new_in_db.equals(db_targets):
         log.warning(
             "Some ToO targets are already in too_target. Only changes "
-            "to metadata columns will be applied."
+            "to metadata columns will be applied for those."
         )
 
     new_targets = too_target_new.filter(~polars.col.too_id.is_in(db_targets["too_id"]))

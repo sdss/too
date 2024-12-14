@@ -63,7 +63,16 @@ def read_too_file(
     if cast:
         targets = targets.cast(too_dtypes)
 
-    targets = targets.sort("too_id").select(list(too_dtypes))
+    targets = targets.sort("added_on", "too_id").select(list(too_dtypes))
+    return targets
+
+
+def deduplicate_too_targets(targets: polars.DataFrame) -> polars.DataFrame:
+    """Deduplicates a list of ToO targets preferring the latest ``added_on`` value."""
+
+    targets = targets.sort("added_on", "too_id")
+    targets = targets.unique(subset=["too_id"], keep="last")
+
     return targets
 
 

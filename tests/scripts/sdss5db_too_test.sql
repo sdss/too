@@ -28,7 +28,8 @@ CREATE TABLE catalogdb.sdss_id_stacked (
     catalogid31 BIGINT,
     ra_sdss_id DOUBLE PRECISION,
     dec_sdss_id DOUBLE PRECISION,
-    sdss_id BIGINT
+    sdss_id BIGSERIAL PRIMARY KEY,
+    last_updated date
 );
 
 CREATE TABLE catalogdb.sdss_id_flat (
@@ -40,7 +41,7 @@ CREATE TABLE catalogdb.sdss_id_flat (
     n_associated SMALLINT,
     ra_catalogid DOUBLE PRECISION,
     dec_catalogid DOUBLE PRECISION,
-    pk BIGINT,
+    pk BIGSERIAL PRIMARY KEY,
     rank INTEGER
 );
 
@@ -333,9 +334,34 @@ CREATE TABLE opsdb_apo.configuration (
     epoch DOUBLE PRECISION,
     calibration_version TEXT);
 
+CREATE TABLE sandbox.sdss_id_stacked (
+    catalogid21 BIGINT,
+    catalogid25 BIGINT,
+    catalogid31 BIGINT,
+    ra_sdss_id DOUBLE PRECISION,
+    dec_sdss_id DOUBLE PRECISION,
+    sdss_id BIGSERIAL PRIMARY KEY,
+    last_updated date
+);
+
+CREATE TABLE sandbox.sdss_id_flat (
+    sdss_id BIGINT,
+    catalogid BIGINT,
+    version_id SMALLINT,
+    ra_sdss_id DOUBLE PRECISION,
+    dec_sdss_id DOUBLE PRECISION,
+    n_associated SMALLINT,
+    ra_catalogid DOUBLE PRECISION,
+    dec_catalogid DOUBLE PRECISION,
+    pk  BIGSERIAL PRIMARY KEY,
+    rank INTEGER
+);
+
 \copy catalogdb.catalog FROM PROGRAM '/usr/bin/gzip -dc catalog.csv.gz' WITH CSV HEADER;
-\copy catalogdb.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
-\copy catalogdb.sdss_id_flat FROM PROGRAM '/usr/bin/gzip -dc sdss_id_flat.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
+-- \copy catalogdb.sdss_id_flat FROM PROGRAM '/usr/bin/gzip -dc sdss_id_flat.csv.gz' WITH CSV HEADER;
+\copy sandbox.sdss_id_stacked FROM PROGRAM '/usr/bin/gzip -dc sdss_id_stacked.csv.gz' WITH CSV HEADER;
+\copy sandbox.sdss_id_flat FROM PROGRAM '/usr/bin/gzip -dc sdss_id_flat.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_gaia_dr3_source FROM PROGRAM '/usr/bin/gzip -dc catalog_to_gaia_dr3_source.csv.gz' WITH CSV HEADER;
 -- \copy catalogdb.catalog_to_sdss_dr13_photoobj_primary FROM PROGRAM '/usr/bin/gzip -dc catalog_to_sdss_dr13_photoobj_primary.csv.gz' WITH CSV HEADER;
 \copy catalogdb.catalog_to_twomass_psc FROM PROGRAM '/usr/bin/gzip -dc catalog_to_twomass_psc.csv.gz' WITH CSV HEADER;
@@ -352,8 +378,6 @@ INSERT INTO targetdb.instrument VALUES (0, 'BOSS'), (1, 'APOGEE');
 INSERT INTO targetdb.observatory VALUES (0, 'APO'), (1, 'LCO');
 
 ALTER TABLE catalogdb.catalog ADD PRIMARY KEY (catalogid);
-ALTER TABLE catalogdb.sdss_id_stacked ADD PRIMARY KEY (sdss_id);
-ALTER TABLE catalogdb.sdss_id_flat ADD PRIMARY KEY (pk);
 ALTER TABLE catalogdb.catalog_to_gaia_dr3_source ADD PRIMARY KEY (catalogid, target_id, version_id);
 -- ALTER TABLE catalogdb.catalog_to_sdss_dr13_photoobj_primary ADD PRIMARY KEY (catalogid, target_id, version_id);
 ALTER TABLE catalogdb.catalog_to_twomass_psc ADD PRIMARY KEY (catalogid, target_id, version_id);
@@ -409,6 +433,16 @@ CREATE INDEX ON catalogdb.sdss_id_flat(catalogid);
 CREATE INDEX ON catalogdb.sdss_id_flat(version_id);
 CREATE INDEX ON catalogdb.sdss_id_flat(rank);
 
+CREATE INDEX ON sandbox.sdss_id_stacked(sdss_id);
+CREATE INDEX ON sandbox.sdss_id_stacked(catalogid21);
+CREATE INDEX ON sandbox.sdss_id_stacked(catalogid25);
+CREATE INDEX ON sandbox.sdss_id_stacked(catalogid31);
+
+CREATE INDEX ON sandbox.sdss_id_flat(sdss_id);
+CREATE INDEX ON sandbox.sdss_id_flat(catalogid);
+CREATE INDEX ON sandbox.sdss_id_flat(version_id);
+CREATE INDEX ON sandbox.sdss_id_flat(rank);
+
 CREATE INDEX ON catalogdb.gaia_dr3_source (q3c_ang2ipix(ra, dec));
 
 -- CREATE INDEX ON catalogdb.sdss_dr13_photoobj (q3c_ang2ipix(ra, dec));
@@ -458,3 +492,11 @@ VACUUM ANALYZE targetdb.version;
 VACUUM ANALYZE targetdb.observatory;
 VACUUM ANALYZE targetdb.field;
 VACUUM ANALYZE targetdb.magnitude;
+
+ALTER SEQUENCE catalogdb.sdss_id_stacked_sdss_id_seq RESTART WITH 300000000;
+ALTER SEQUENCE catalogdb.sdss_id_flat_pk_seq RESTART WITH 300000000;
+ALTER SEQUENCE sandbox.sdss_id_stacked_sdss_id_seq RESTART WITH 300000000;
+ALTER SEQUENCE sandbox.sdss_id_flat_pk_seq RESTART WITH 300000000;
+
+ALTER ROLE sdss SET search_path TO public,catalogdb,targetdb,opsdb_apo;
+ALTER ROLE sdss_user SET search_path TO public,catalogdb,targetdb,opsdb_apo;

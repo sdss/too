@@ -52,6 +52,7 @@ too_dtypes: polars.type_aliases.SchemaDefinition = {
     "observe_from_mjd": polars.Int32,
     "observe_until_mjd": polars.Int32,
     "observed": polars.Boolean,
+    "added_on": polars.Date,
 }
 
 too_metadata_columns = [
@@ -78,6 +79,7 @@ too_metadata_columns = [
     "observe_from_mjd",
     "observe_until_mjd",
     "observed",
+    "added_on",
 ]
 
 column_descriptions = {
@@ -87,7 +89,7 @@ column_descriptions = {
     "sdss_id": "sdss_id for this target, if already matched.",
     "gaia_dr3_source_id": "Unique identifier of the target in the Gaia DR3 catalog (`source_id` column).",
     "twomass_pts_key": "Unique identifier of the target in the 2MASS catalog (`pts_key` column).",
-    "sky_brightness_mode": "The sky brightness mode. Either `bright` or `dark`.",
+    "sky_brightness_mode": "The sky brightness mode. Either `bright` or `dark`. [required]",
     "ra": "The Right Ascension of the target in ICRS coordinates as decimal degrees. [required]",
     "dec": "The declination of the target in ICRS coordinates as decimal degrees. [required]",
     "pmra": "The proper motion in RA in `mas/yr` as a true angle (the `cos(dec)` factor must have been applied).",
@@ -115,6 +117,7 @@ column_descriptions = {
     "observe_from_mjd": "MJD from which the target is considered observable. Default to the current date.",
     "observe_until_mjd": "MJD at which the target should automatically be consider inactive. If empty, the target never expires.",
     "observed": "`true` if the target has been fully observed and should not be assigned again. [required]",
+    "added_on": "Date when the target was last added or modified, with the format YYYY-MM-DD. [required]",
 }
 
 mag_columns = [

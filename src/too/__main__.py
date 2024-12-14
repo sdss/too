@@ -105,6 +105,7 @@ def process(
         read_too_file,
         run_too_carton,
         too_dtypes,
+        update_sdss_id_tables,
         xmatch_too_targets,
     )
 
@@ -136,7 +137,12 @@ def process(
             targets = targets.vstack(read_too_file(file, cast=True))
 
         log.info("Loading targets into the database.")
-        load_too_targets(targets, database, update_existing=True)
+        load_too_targets(
+            targets,
+            database,
+            update_existing=True,
+            validate_magnitude_limits=True,
+        )
 
     if cross_match:
         log.info("Cross-matching targets.")
@@ -145,6 +151,7 @@ def process(
         if run_carton:
             log.info("Running the ToO carton.")
             run_too_carton()
+            update_sdss_id_tables(database)
 
 
 @too_cli.command()

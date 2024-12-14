@@ -46,7 +46,6 @@ def test_validate_too_target_passes(
         ("active", "Null 'active' column values found"),
         ("mag_columns", "ToOs found with missing magnitudes"),
         ("fiber_type", "Invalid fiber_type values."),
-        ("sloan_mags", "Found rows with incomplete Sloan magnitudes."),
         ("can_offset", "Null 'can_offset' column values found"),
         ("sky_brightness_mode", "Invalid sky_brightness_mode values found."),
     ],
@@ -80,10 +79,6 @@ def test_validate_too_target_fails(
         )
     elif test_mode == "fiber_type":
         too_mock_test[0, "fiber_type"] = "INVALID"
-    elif test_mode == "sloan_mags":
-        too_mock_test = too_mock_test.with_columns(
-            u_mag=polars.lit(None, dtype=polars.Float32)
-        )
     elif test_mode == "can_offset":
         too_mock_test[0, "can_offset"] = None
     elif test_mode == "sky_brightness_mode":
@@ -113,7 +108,8 @@ def test_validate_too_targets_bn_invalid(
         bn_dark_monit_valid=polars.lit(True, dtype=polars.Boolean),
         mag_lim_dark_monit_valid=polars.lit(True, dtype=polars.Boolean),
     )
-    too_mock_bn[0, -1] = False
+    too_mock_bn[0, "sky_brightness_mode"] = "dark"
+    too_mock_bn[0, "mag_lim_dark_monit_valid"] = False
 
     mocker.patch.object(
         too.validate,
@@ -126,6 +122,7 @@ def test_validate_too_targets_bn_invalid(
             too_mock,
             database,
             bright_limit_checks=True,
+            bright_limit_mode="error",
         )
 
 

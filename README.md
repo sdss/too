@@ -33,7 +33,7 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | sdss_id             | int64   | sdss_id for this target, if already matched.                                                                         |
 | gaia_dr3_source_id  | int64   | Unique identifier of the target in the Gaia DR3 catalog (`source_id` column).                                        |
 | twomass_pts_key     | int32   | Unique identifier of the target in the 2MASS catalog (`pts_key` column).                                             |
-| sky_brightness_mode | string  | The sky brightness mode. Either `bright` or `dark`.                                                                  |
+| sky_brightness_mode | string  | The sky brightness mode. Either `bright` or `dark`. [required]                                                       |
 | ra                  | float64 | The Right Ascension of the target in ICRS coordinates as decimal degrees. [required]                                 |
 | dec                 | float64 | The declination of the target in ICRS coordinates as decimal degrees. [required]                                     |
 | pmra                | float32 | The proper motion in RA in `mas/yr` as a true angle (the `cos(dec)` factor must have been applied).                  |
@@ -61,6 +61,7 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | observe_from_mjd    | int32   | MJD from which the target is considered observable. Default to the current date.                                     |
 | observe_until_mjd   | int32   | MJD at which the target should automatically be consider inactive. If empty, the target never expires.               |
 | observed            | boolean | `true` if the target has been fully observed and should not be assigned again. [required]                            |
+| added_on            | date    | Date when the target was last added or modified, with the format YYYY-MM-DD. [required]                              |
 
 The input file(s) must contain *all* the columns defined above with the correct data formats.
 
