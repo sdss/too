@@ -165,7 +165,7 @@ def dump_to_parquet(
     n_requested = df_observatory["n_exposures"].to_numpy()
     elligible = df_observatory.filter(numpy.greater(n_requested, n_done)).sort("too_id")
 
-    log.info(f"Found {len(elligible)} targets of {len(targets)} total.")
+    log.info(f"Found {len(elligible)} elligible targets of {len(targets)} total.")
 
     # Add bright neighbour and magnitude limit check columns.
     log.info("Adding bright neighbour and magnitude limit columns.")
