@@ -103,6 +103,12 @@ def test_load_too_targets(too_mock: polars.DataFrame, caplog: pytest.LogCaptureF
 
     assert added.height == 10
     assert catalogdb.ToO_Target.select().count() == 10
+    assert (
+        catalogdb.ToO_Metadata.select()
+        .where(catalogdb.ToO_Metadata.optical_prov == "too")
+        .count()
+        == 10
+    )
 
     # Repeat. No new targets should be added.
     added = load_too_targets(too_mock[0:10], catalogdb.database)

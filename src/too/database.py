@@ -117,6 +117,9 @@ def load_too_targets(
         bright_limit_checks=validate_magnitude_limits,
     )
 
+    # We always want to set the optical_prov column to too.
+    targets = targets.with_columns(optical_prov=polars.lit("too"))
+
     too_columns = ["too_id"]
     too_columns += [col for col in too_dtypes if col not in too_metadata_columns]
 
