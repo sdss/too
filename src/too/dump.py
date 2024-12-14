@@ -20,10 +20,10 @@ if TYPE_CHECKING:
     from sdssdb.connection import PeeweeDatabaseConnection
 
 
-__all__ = ["dump_to_parquet"]
+__all__ = ["dump_targets_to_parquet", "dump_sdss_id_tables"]
 
 
-def dump_to_parquet(
+def dump_targets_to_parquet(
     observatory: str,
     path: os.PathLike | str,
     database: PeeweeDatabaseConnection | None = None,
@@ -175,3 +175,39 @@ def dump_to_parquet(
     bn.write_parquet(path)
 
     return bn
+
+
+def dump_sdss_id_tables(last_updated: str, database: PeeweeDatabaseConnection):
+    """Dumps the SDSS ID tables to CSV files.
+
+    Parameters
+    ----------
+    last_updated
+        The value of the ``last_updated`` column in ``sandbox.sdss_id_stacked``
+        to filter the data.
+    database
+        The database connection.
+
+    """
+
+    sdss_id_flat_path = pathlib.Path("sdss_id_flat.csv")
+    sdss_id_stacked_path = pathlib.Path("sdss_id_stacked.csv")
+
+    if sdss_id_flat_path.exists() or sdss_id_stacked_path.exists():
+        raise FileExistsError("SDSS ID CSV files already exist.")
+
+    sdss_id_stacked_data = polars.read_database(
+        f"SELECT * FROM sandbox.sdss_id_stacked WHERE last_updated = {last_updated!r}",
+        database,
+    )
+
+    sdss_id_flat_data = polars.read_database(
+        f"""SELECT flat.* FROM sandbox.sdss_id_flat flat
+                JOIN sandbox.sdss_id_stacked stacked ON stacked.sdss_id = flat.sdss_id
+                WHERE stacked.last_updated = {last_updated!r}
+        """,
+        database,
+    )
+
+    sdss_id_stacked_data.write_csv(sdss_id_stacked_path)
+    sdss_id_flat_data.write_csv(sdss_id_flat_path)

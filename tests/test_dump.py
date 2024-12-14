@@ -16,7 +16,7 @@ import polars
 import pytest
 
 from too.database import load_too_targets
-from too.dump import dump_to_parquet
+from too.dump import dump_targets_to_parquet
 from too.xmatch import xmatch_too_targets
 
 
@@ -41,7 +41,7 @@ def test_dump(
 
     path = tmp_path / "too_dump.parquet"
 
-    df = dump_to_parquet("APO", path, database=database)
+    df = dump_targets_to_parquet("APO", path, database=database)
 
     assert isinstance(df, polars.DataFrame)
     assert path.exists()
@@ -52,9 +52,9 @@ def test_dump(
 
 def test_dump_invalid_observatory(database: PeeweeDatabaseConnection):
     with pytest.raises(ValueError):
-        dump_to_parquet("ManuaKea", "/a/b.parquet", database=database)
+        dump_targets_to_parquet("ManuaKea", "/a/b.parquet", database=database)
 
 
 def test_dump_invalid_database():
     with pytest.raises(ValueError):
-        dump_to_parquet("APO", "/a/b.parquet", database="abc")  # type: ignore
+        dump_targets_to_parquet("APO", "/a/b.parquet", database="abc")  # type: ignore

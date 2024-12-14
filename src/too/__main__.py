@@ -154,8 +154,8 @@ def process(
             update_sdss_id_tables(database)
 
 
-@too_cli.command()
-def dump(
+@too_cli.command(name="dump-targets")
+def dump_targets(
     file: Annotated[str, typer.Argument(help="The file to dump the ToO targets into.")],
     observatory: Annotated[
         Observatories,
@@ -168,10 +168,41 @@ def dump(
 ):
     """Dumps the current ToO targets into a Parquet file."""
 
-    from too import connect_to_database, dump_to_parquet
+    from too import connect_to_database, dump_targets_to_parquet
 
     database = connect_to_database(dbname, host=host, port=port, user=user)
-    dump_to_parquet(observatory.value.upper(), file, database=database)
+    dump_targets_to_parquet(observatory.value.upper(), file, database=database)
+
+
+@too_cli.command(name="dump-sdss-id")
+def dump_sdss_id(
+    last_updated: Annotated[
+        str,
+        typer.Argument(help="The last_updated value to use to search for new targets."),
+    ],
+    dbname: Annotated[str, dbname] = "sdss5db",
+    host: Annotated[str, host] = "localhost",
+    port: Annotated[int | None, port] = None,
+    user: Annotated[str, user] = "sdss",
+):
+    """Dumps the ``sdss_id_flat`` and ``sdss_id_stacked`` tables for a given date.
+
+    Searches the ``sandbox.sdss_id_stacked`` table for targets matching
+    ``last_updated`` and uses that to determine the ``sdss_id_flat`` associated rows.
+    The tables are saved to the current directory as CSV files.
+
+    """
+
+    from too import connect_to_database, dump_sdss_id_tables
+
+    database = connect_to_database(
+        dbname,
+        host=host,
+        port=port,
+        user=user,
+    )
+
+    print(dump_sdss_id_tables(last_updated, database))
 
 
 @too_cli.command()

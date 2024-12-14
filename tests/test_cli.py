@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+import datetime
+import os
 import pathlib
 
 import polars
@@ -66,7 +68,7 @@ def test_cli_only_load(
     assert catalogdb.ToO_Metadata.select().count() == n_loaded
 
 
-def test_cli_only_process(mock_validation):
+def test_cli_only_process(tmp_path_factory: pytest.TempPathFactory, mock_validation):
     database = connect_to_database("sdss5db_too_test", user="sdss", host="localhost")
 
     n_sdss_id_flat_pre = int(
@@ -86,6 +88,25 @@ def test_cli_only_process(mock_validation):
     )
 
     assert n_sdss_id_flat_post > n_sdss_id_flat_pre
+
+    # Now that we have run the sdss_id update, test that the dump-sdss-id command works.
+    # First move to a temporary directory for the sdss_id CSV files
+    sdss_id_dir = tmp_path_factory.mktemp("sdss_id")
+    os.chdir(sdss_id_dir)
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    result_dump_sdss_id = runner.invoke(
+        too_cli,
+        ["dump-sdss-id", "--dbname", "sdss5db_too_test", today],
+    )
+    assert result_dump_sdss_id.exit_code == 0
+
+    assert (sdss_id_dir / "sdss_id_flat.csv").exists()
+    assert (sdss_id_dir / "sdss_id_stacked.csv").exists()
+
+    stacked = polars.read_csv(sdss_id_dir / "sdss_id_stacked.csv")
+    assert len(stacked) > 0
 
 
 def test_cli_update(
@@ -128,14 +149,14 @@ def test_cli_update(
     assert n_carton_to_target == n_target
 
 
-def test_cli_dump(tmp_path: pathlib.Path, mock_validation):
+def test_cli_dump_targets(tmp_path: pathlib.Path, mock_validation):
     tmp_file = tmp_path / "dump_APO.parquet"
 
     runner = CliRunner()
     result = runner.invoke(
         too_cli,
         [
-            "dump",
+            "dump-targets",
             "--observatory",
             "APO",
             "--dbname",
