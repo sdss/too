@@ -20,6 +20,7 @@ import polars
 import rich.progress
 
 from too.datamodel import too_dtypes
+from too.exceptions import ValidationError
 
 
 if TYPE_CHECKING:
@@ -60,10 +61,19 @@ def read_too_file(
     else:
         targets = path
 
-    if cast:
-        targets = targets.cast(too_dtypes)
+    try:
+        if cast:
+            targets = targets.cast(too_dtypes)
 
-    targets = targets.sort("added_on", "too_id").select(list(too_dtypes))
+        targets = targets.sort("added_on", "too_id").select(list(too_dtypes))
+
+    except polars.exceptions.ColumnNotFoundError as err:
+        column = str(err).splitlines()[0]
+        raise ValidationError(f"Missing column {column!r} in input file.")
+
+    except Exception as err:
+        raise ValidationError(f"Error reading input file: {err!r}")
+
     return targets
 
 

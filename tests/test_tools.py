@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING
 import polars
 import pytest
 
-from too.tools import match_fields
+from too.datamodel import too_dtypes
+from too.exceptions import ValidationError
+from too.tools import match_fields, read_too_file
 
 
 if TYPE_CHECKING:
@@ -62,3 +64,22 @@ def test_match_fields_check_separation(
     # Most random coordinates will have some that do not fall inside our tiling.
     with pytest.raises(ValueError):
         match_fields(too_mock, database, "eta-6", check_separation=True)
+
+
+def test_read_too_file_missing_column():
+    df = polars.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+
+    with pytest.raises(ValidationError) as err:
+        read_too_file(df)
+
+    assert "Missing column" in str(err)
+
+
+def test_read_too_file_cast_failes():
+    df = polars.DataFrame({name: None for name in too_dtypes}, schema=too_dtypes)
+    df = df.with_columns(g_mag=polars.Series(["hello"], dtype=polars.String))
+
+    with pytest.raises(ValidationError) as err:
+        read_too_file(df, cast=True)
+
+    assert "Error reading input file" in str(err)
