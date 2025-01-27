@@ -202,7 +202,7 @@ def dump_sdss_id(
         user=user,
     )
 
-    print(dump_sdss_id_tables(last_updated, database))
+    dump_sdss_id_tables(last_updated, database)
 
 
 @too_cli.command()

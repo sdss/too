@@ -118,11 +118,8 @@ def dump_targets_to_parquet(
         .dicts()
     )
 
-    length = 0
     for t in targets:
-        t["jd"] = [j if j else -1 for j in t["jd"]]
-        if len(t["jd"]) > length:
-            length = len(t["jd"])
+        t["jd"] = [] if t["jd"] == [None] else t["jd"]
 
     dataframe = polars.from_dicts(
         list(targets),
@@ -152,7 +149,7 @@ def dump_targets_to_parquet(
             "sky_brightness_mode": polars.String,
             "n_exposures": polars.Int32,
             "observe_from_mjd": polars.Int32,
-            "jd": polars.Array(polars.Float32, length),
+            "jd": polars.List(polars.Float32),
         },
     )
 
@@ -172,6 +169,7 @@ def dump_targets_to_parquet(
     bn = add_bright_limits_columns(elligible, database, observatories=[observatory])
 
     log.debug(f"Saving data to {path!s}.")
+    bn.drop_in_place("jd")
     bn.write_parquet(path)
 
     return bn
@@ -199,6 +197,12 @@ def dump_sdss_id_tables(last_updated: str, database: PeeweeDatabaseConnection):
     sdss_id_stacked_data = polars.read_database(
         f"SELECT * FROM sandbox.sdss_id_stacked WHERE last_updated = {last_updated!r}",
         database,
+        schema_overrides={
+            "sdss_id": polars.Int64,
+            "catalogid21": polars.Int64,
+            "catalogid25": polars.Int64,
+            "catalogid31": polars.Int64,
+        },
     )
 
     sdss_id_flat_data = polars.read_database(

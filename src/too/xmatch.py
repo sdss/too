@@ -286,6 +286,6 @@ def xmatch_too_targets(
     if max_cid:
         xmatch_planner._max_cid = max_cid + 1
 
-    xmatch_planner.run(dry_run=dry_run, keep_temp=keep_temp, force=True)
+    xmatch_planner.run(dry_run=dry_run, keep_temp=keep_temp, force=True, vacuum=False)
 
     return xmatch_planner
