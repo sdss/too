@@ -66,8 +66,7 @@ def create_test_database(
     catalog_exists = catalogdb.Catalog.table_exists()
     if catalog_exists:
         raise RuntimeError(
-            "The table catalog exists. "
-            "This script can only run on an empty database."
+            "The table catalog exists. This script can only run on an empty database."
         )
 
     files = [
