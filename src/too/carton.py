@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import pathlib
 import warnings
 
 from typing import TYPE_CHECKING
@@ -41,6 +42,51 @@ def run_too_carton():
 
     too_carton.run(overwrite=True)
     too_carton.load(mode="append")
+
+
+def backup_sdss_id_tables(
+    database: PeeweeDatabaseConnection,
+    tables=[
+        "sdss_id_flat",
+        "sdss_id_flat_addendum",
+        "sdss_id_stacked",
+        "sdss_id_stacked_addendum",
+    ],
+    schema="sandbox",
+    outdir: pathlib.Path | str = ".",
+    suffix: str = "",
+):
+    """Backs up the SDSS ID tables.
+
+    Parameters
+    ----------
+    database
+        The database connection.
+    tables
+        The tables to backup. Each table is backed up as a separate file in
+        ``outdir`` with the format ``<schema>_<table_name>_<suffix>.csv``.
+    schema
+        The schema where the tables are located.
+    outdir
+        The output directory for the backup files. Defaults to the current
+        directory.
+    suffix
+        A suffix to add to the backup files.
+
+    """
+
+    outdir = pathlib.Path(outdir).absolute()
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    if suffix:
+        suffix = f"_{suffix}"
+
+    assert database.connected, "Database connection must be established."
+
+    for table in tables:
+        cursor = database.cursor()
+        with open(outdir / f"{schema}_{table}{suffix}.csv", "w") as file:
+            cursor.copy_expert(f"COPY {schema}.{table} TO STDOUT WITH CSV HEADER", file)
 
 
 def update_sdss_id_tables(database: PeeweeDatabaseConnection):

@@ -23,6 +23,7 @@ import rich.progress
 
 from sdsstools import get_sjd
 
+from too import log
 from too.datamodel import too_dtypes
 from too.exceptions import ValidationError
 
@@ -77,6 +78,57 @@ def read_too_file(
 
     except Exception as err:
         raise ValidationError(f"Error reading input file: {err!r}")
+
+    return targets
+
+
+def read_all_files(
+    path: pathlib.Path | str,
+    ignore_invalid: bool = False,
+    sort: bool = True,
+    silent: bool = False,
+) -> polars.DataFrame:
+    """Reads all ToO files in a directory.
+
+    Parameters
+    ----------
+    path
+        The path to the directory containing the files. All CSV and Parquet files
+        will be read.
+    ignore_invalid
+        If ``True``, ignores files that cannot be read.
+    sort
+        If ``True``, sorts the resulting dataframe by ``added_on`` and ``too_id``.
+    silent
+        If ``True``, does not print any output to the console log.
+
+    """
+
+    path = pathlib.Path(path)
+
+    process_files: list[pathlib.Path] = []
+    process_files.extend(path.glob("*.csv"))
+    process_files.extend(path.glob("*.parquet"))
+
+    targets = polars.DataFrame({}, schema=too_dtypes)
+    for file in process_files:
+        try:
+            new_targets = read_too_file(file, cast=True)
+
+        except Exception as ee:
+            if not silent:
+                log.error(f"Failed to read file {file}: {ee}")
+
+            if ignore_invalid:
+                continue
+            else:
+                raise
+
+        else:
+            targets = targets.vstack(new_targets)
+
+    if sort:
+        targets = targets.sort(["added_on", "too_id"])
 
     return targets
 
