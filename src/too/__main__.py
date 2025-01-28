@@ -166,6 +166,9 @@ def process(
             validate_magnitude_limits=True,
         )
 
+    else:
+        log.warning("No new files to process.")
+
     if cross_match:
         log.info("Cross-matching targets.")
         xmatch_too_targets(database)
