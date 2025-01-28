@@ -887,6 +887,20 @@ wheels = [
 ]
 
 [[package]]
+name = "polars-lts-cpu"
+version = "1.21.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/a8/8a6bd305a235ffb31ffce11b39974410ebb2502bdd895c56df1755d23a7c/polars_lts_cpu-1.21.0.tar.gz", hash = "sha256:9468cd42eb6f82085ff9f703cdb219728e934cf0b53db04778a090c9634c2393", size = 4321651 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/7b/bd542d6093e0e7d9eed93b6b6f38da27b14280d3ec87cf5fe329f75718d5/polars_lts_cpu-1.21.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:bbf5d4f494e702b840c10712165f9194deb0616e28a05ea840895c4a8fbd4e24", size = 30602313 },
+    { url = "https://files.pythonhosted.org/packages/19/12/a7b1702e730a3f0bef3dfaa89cc3d160122f908af22eb54d2748ad5a39d2/polars_lts_cpu-1.21.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:f3e216a5a64fa4c6378fc21e0df62c6369fcf09efde167e30ad04ce8af30d380", size = 28034085 },
+    { url = "https://files.pythonhosted.org/packages/d9/40/6ea00669108f6a33e2d81dc98695882853fa721ed607a766a2c7f74cf277/polars_lts_cpu-1.21.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b305275c8abdd076d337a012b9aeb0e20aa4e82d8cb370756c70e8c6bd8588e4", size = 31196749 },
+    { url = "https://files.pythonhosted.org/packages/fa/27/d89ad586a790cd97156eab46cf57d1fbd155bba506e03dca3889a5602ee6/polars_lts_cpu-1.21.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:89f82ed33d6dcf98b73400eef65de93f6797a92c2403d8dc423760b8275f1410", size = 29005229 },
+    { url = "https://files.pythonhosted.org/packages/78/ba/a4dc9a1e246dd9f5158563c6eb9856d528dd4be8d2912e88c554a85287af/polars_lts_cpu-1.21.0-cp39-abi3-win_amd64.whl", hash = "sha256:b1f3acf505866b5ac19e308090b3a9be9a43689e8136b19e55596b736475377b", size = 31726056 },
+    { url = "https://files.pythonhosted.org/packages/52/3c/1b6e0c3e12397506f9550284c934b48b70cdf76c74ec33dfd0c5e3a7148f/polars_lts_cpu-1.21.0-cp39-abi3-win_arm64.whl", hash = "sha256:33953cfd2d3c7739570008585d533f5e48b0db80779675bb6cfa008a1e3c7dca", size = 28179646 },
+]
+
+[[package]]
 name = "prefixed"
 version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1399,6 +1413,11 @@ dependencies = [
     { name = "typer" },
 ]
 
+[package.optional-dependencies]
+lts = [
+    { name = "polars-lts-cpu" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "coverage" },
@@ -1418,6 +1437,7 @@ requires-dist = [
     { name = "astropy-healpix", specifier = ">=1.0.2" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "polars", specifier = ">=1.17.1" },
+    { name = "polars-lts-cpu", marker = "extra == 'lts'", specifier = ">=1.17.1" },
     { name = "pyarrow", specifier = ">=18.0.0" },
     { name = "rich", specifier = ">=13.7.0" },
     { name = "sdss-coordio", specifier = ">=1.13.0" },
