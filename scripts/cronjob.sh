@@ -24,7 +24,7 @@ source .venv/bin/activate
 
 module use /uufs/chpc.utah.edu/common/home/sdss50/software/modulefiles
 module load sdsscore/main
-module load fps_calibrations
+module load fps_calibrations/main
 
 too process --ignore-invalid --cross-match --run-carton -v $TOO_TARGET_FILES
 
