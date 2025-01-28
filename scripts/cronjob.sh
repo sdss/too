@@ -22,6 +22,7 @@ DATE=`date "+%Y-%m-%d"`
 cd /uufs/chpc.utah.edu/common/home/sdssunit/software/github/sdss/too
 source .venv/bin/activate
 
+module use /uufs/chpc.utah.edu/common/home/sdss50/software/modulefiles
 module load sdsscore/main
 module load fps_calibrations
 
@@ -35,5 +36,6 @@ too dump-sdss-id --root $SDSS_ID_DIFFS_PATH/$DATE $DATE
 SDSS_ID_FLAT_DIFFS=$SDSS_ID_DIFFS_PATH/$DATE/sdss_id_flat.csv
 SDSS_ID_STACKED_DIFFS=$SDSS_ID_DIFFS_PATH/$DATE/sdss_id_stacked.csv
 
+module load postgresql/15.3
 psql -h pipelines.sdss.org -U u0931042 -d sdss5db -c "\copy catalogdb.sdss_id_flat FROM '$SDSS_ID_FLAT_DIFFS' CSV HEADER;"
 psql -h pipelines.sdss.org -U u0931042 -d sdss5db -c "\copy catalogdb.sdss_id_stacked FROM '$SDSS_ID_STACKED_DIFFS' CSV HEADER;"
