@@ -912,6 +912,5 @@ def add_bright_limits_columns(
             processed_either,
         ]
     )
-    breakpoint()
 
     return final_df.sort("too_id")
