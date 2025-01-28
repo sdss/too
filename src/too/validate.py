@@ -409,7 +409,7 @@ def bn_validation(
     healpix map of bright neighbors for each designmode
     created with this script:
     https://github.com/sdss/mugatu/blob/master/bin/bright_neigh_healpix_map.py.
-    To use this function, the enviornment varriable BN_HEALPIX must be
+    To use this function, the environment variable BN_HEALPIX must be
     set to the path to these healpix maps.
 
     Parameters
