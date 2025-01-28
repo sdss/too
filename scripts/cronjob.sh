@@ -9,9 +9,13 @@ SDSS_ID_DIFFS_PATH=/uufs/chpc.utah.edu/common/home/sdss50/sdsswork/sandbox/sdss_
 
 TOO_TARGET_FILES=/uufs/chpc.utah.edu/common/home/sdss50/sdsswork/mos/too/targets
 
+export RS_VERSION=theta-1
+
 export TOO_DBUSER=sdss
 export TOO_DBHOST=operations.sdss.org
 export TOO_DBNAME=sdss5db
+
+export BN_HEALPIX=/uufs/chpc.utah.edu/common/home/sdss50/sdsswork/target/bn_healpix
 
 DATE=`date "+%Y-%m-%d"`
 
@@ -19,6 +23,7 @@ cd /uufs/chpc.utah.edu/common/home/sdssunit/software/github/sdss/too
 source .venv/bin/activate
 
 module load sdsscore/main
+module load fps_calibrations
 
 too process --ignore-invalid --cross-match --run-carton -v $TOO_TARGET_FILES
 
