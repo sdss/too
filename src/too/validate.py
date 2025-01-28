@@ -722,7 +722,7 @@ def validate_too_targets(
         raise ValidationError("Null 'can_offset' column values found in ToO targets.")
 
     # Check that the sky_brightness_mode value are valid.
-    valid_brightness_modes = ["bright", "dark"]
+    valid_brightness_modes = ["bright", "dark", "either"]
 
     targets_invalid_brightness_mode = targets.filter(
         polars.col.sky_brightness_mode.is_in(valid_brightness_modes).not_()
@@ -837,7 +837,10 @@ def add_bright_limits_columns(
     for observatory in observatories:
         for bmode in valid_brightness_modes:
             targets_bmode = targets.filter(
-                (polars.col.sky_brightness_mode == bmode)
+                (
+                    (polars.col.sky_brightness_mode == bmode)
+                    | (polars.col.sky_brightness_mode == "either")
+                )
                 & (polars.col.observatory == observatory)
             )
 
@@ -891,4 +894,24 @@ def add_bright_limits_columns(
         selectors.starts_with("mag_lim_").fill_null(False),
     )
 
-    return processed_df.sort("too_id")
+    # For targets with sky_brightness_mode='either', we will have two rows, one
+    # evaluated for each brightness mode. We collapse the bn_ and mag_lim_ columns
+    # and remove the duplicates.
+    processed_either = (
+        processed_df.filter(polars.col.sky_brightness_mode == "either")
+        .with_columns(
+            polars.selectors.starts_with("mag_").any(),
+            polars.selectors.starts_with("bn_").any(),
+        )
+        .unique("too_id")
+    )
+
+    final_df = polars.concat(
+        [
+            processed_df.filter(polars.col.sky_brightness_mode != "either"),
+            processed_either,
+        ]
+    )
+    breakpoint()
+
+    return final_df.sort("too_id")
