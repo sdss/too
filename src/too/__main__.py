@@ -35,18 +35,22 @@ too_cli = typer.Typer(
 dbname = typer.Option(
     help="The name of the database to connect to.",
     rich_help_panel="Options for connecting to the database server",
+    envvar="TOO_DBNAME",
 )
 host = typer.Option(
     help="The host of the database server.",
     rich_help_panel="Options for connecting to the database server",
+    envvar="TOO_DBHOST",
 )
 port = typer.Option(
     help="The port of the database server.",
     rich_help_panel="Options for connecting to the database server",
+    envvar="TOO_DBPORT",
 )
 user = typer.Option(
     help="The user to connect to the database.",
     rich_help_panel="Options for connecting to the database server",
+    envvar="TOO_DBUSER",
 )
 
 
@@ -62,10 +66,18 @@ def process(
         typer.Argument(
             exists=True,
             dir_okay=True,
+            envvar="TOO_TARGET_FILES",
             help="The list of files to process. If a directory is passed, all the "
             "files in the directory will be processed.",
         ),
     ] = None,
+    ignore_invalid: Annotated[
+        bool,
+        typer.Option(
+            "--ignore-invalid",
+            help="Exclude target files that cannot be read or cast.",
+        ),
+    ] = False,
     verbose: Annotated[
         bool,
         typer.Option("-v", "--verbose", help="Prints more information."),
@@ -134,7 +146,17 @@ def process(
         log.debug(f"Reading {len(process_files)} input file(s).")
         targets = polars.DataFrame({}, schema=too_dtypes)
         for file in process_files:
-            targets = targets.vstack(read_too_file(file, cast=True))
+            try:
+                new_targets = read_too_file(file, cast=True)
+            except Exception as ee:
+                log.error(f"Failed to read file {file}: {ee}")
+                if ignore_invalid:
+                    continue
+                else:
+                    raise
+            else:
+                targets = targets.vstack(new_targets)
+        targets = targets.sort(["added_on", "too_id"])
 
         log.info("Loading targets into the database.")
         load_too_targets(
@@ -180,6 +202,10 @@ def dump_sdss_id(
         str,
         typer.Argument(help="The last_updated value to use to search for new targets."),
     ],
+    root: Annotated[
+        str,
+        typer.Option(help="The root directory where to save the CSV files."),
+    ] = ".",
     dbname: Annotated[str, dbname] = "sdss5db",
     host: Annotated[str, host] = "localhost",
     port: Annotated[int | None, port] = None,
@@ -202,7 +228,7 @@ def dump_sdss_id(
         user=user,
     )
 
-    dump_sdss_id_tables(last_updated, database)
+    dump_sdss_id_tables(last_updated, database, root=root)
 
 
 @too_cli.command()

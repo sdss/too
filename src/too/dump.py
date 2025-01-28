@@ -175,7 +175,11 @@ def dump_targets_to_parquet(
     return bn
 
 
-def dump_sdss_id_tables(last_updated: str, database: PeeweeDatabaseConnection):
+def dump_sdss_id_tables(
+    last_updated: str,
+    database: PeeweeDatabaseConnection,
+    root: pathlib.Path | str = ".",
+):
     """Dumps the SDSS ID tables to CSV files.
 
     Parameters
@@ -185,11 +189,16 @@ def dump_sdss_id_tables(last_updated: str, database: PeeweeDatabaseConnection):
         to filter the data.
     database
         The database connection.
+    root
+        The root directory where to save the CSV files.
 
     """
 
-    sdss_id_flat_path = pathlib.Path("sdss_id_flat.csv")
-    sdss_id_stacked_path = pathlib.Path("sdss_id_stacked.csv")
+    root = pathlib.Path(root)
+    root.mkdir(exist_ok=True, parents=True)
+
+    sdss_id_flat_path = root / "sdss_id_flat.csv"
+    sdss_id_stacked_path = root / "sdss_id_stacked.csv"
 
     if sdss_id_flat_path.exists() or sdss_id_stacked_path.exists():
         raise FileExistsError("SDSS ID CSV files already exist.")
@@ -215,3 +224,5 @@ def dump_sdss_id_tables(last_updated: str, database: PeeweeDatabaseConnection):
 
     sdss_id_stacked_data.write_csv(sdss_id_stacked_path)
     sdss_id_flat_data.write_csv(sdss_id_flat_path)
+
+    return sdss_id_stacked_path, sdss_id_flat_path
