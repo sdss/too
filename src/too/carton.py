@@ -32,7 +32,7 @@ def run_too_carton():
     from target_selection import log as ts_log
     from target_selection.exceptions import TargetSelectionImportWarning
 
-    ts_log.setLevel(10000)  # Disable target_selection logging
+    ts_log.setLevel(40)  # Disable target_selection logging but allow exceptions.
     warnings.simplefilter("ignore", TargetSelectionImportWarning)
 
     from target_selection.cartons.too import ToO_Carton  # Slow import
