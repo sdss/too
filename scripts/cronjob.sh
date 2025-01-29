@@ -29,6 +29,8 @@ source .venv/bin/activate
 too process --ignore-invalid --cross-match --run-carton -v $TOO_TARGET_FILES
 
 too dump-targets $SDSSCORE_APO_TOO/too_targets_apo_$DATE.parquet --observatory APO
+rm -f $SDSSCORE_APO_TOO/current
+ln -s $SDSSCORE_APO_TOO/too_targets_apo_$DATE.parquet $SDSSCORE_APO_TOO/current
 
 mkdir -p $SDSS_ID_DIFFS_PATH/$DATE
 too dump-sdss-id --root $SDSS_ID_DIFFS_PATH/$DATE $DATE
