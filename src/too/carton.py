@@ -95,6 +95,19 @@ def update_sdss_id_tables(database: PeeweeDatabaseConnection):
     """Updates the SDSS ID tables."""
 
     from target_selection.sdss_id import append_to_sdss_id
+    from target_selection.sdss_id.append_to_sdss_id import database as append_database
+    from target_selection.sdss_id.create_catalogidx_to_catalogidy import (
+        database as cidx_database,
+    )
+
+    # The sdss_id code uses whichever database profile is default for the machine.
+    # This is necessary to ensure that the database that we pass to this function
+    # is actually used.
+    append_database.connect(dbname=database.dbname, **database.connect_params)
+    append_database._config.update(**database.connect_params)
+
+    cidx_database.connect(dbname=database.dbname, **database.connect_params)
+    cidx_database._config.update(**database.connect_params)
 
     log.info("Updating SDSS ID tables.")
 
