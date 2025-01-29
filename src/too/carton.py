@@ -24,6 +24,7 @@ __all__ = ["run_too_carton", "update_sdss_id_tables"]
 
 
 TOO_TARGET_PLAN = "1.1.0"
+TOO_TAG = "too"
 
 
 def run_too_carton():
@@ -38,6 +39,7 @@ def run_too_carton():
     from target_selection.cartons.too import ToO_Carton  # Slow import
 
     too_carton = ToO_Carton(TOO_TARGET_PLAN)
+    too_carton.tag = TOO_TAG
     too_carton.log = log
 
     too_carton.run(overwrite=True)
