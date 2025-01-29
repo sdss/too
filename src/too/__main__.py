@@ -231,7 +231,7 @@ def dump_sdss_id(
         user=user,
     )
 
-    dump_sdss_id_tables(last_updated, database, root=root)
+    dump_sdss_id_tables(last_updated, database, root=root, overwrite=True)
 
 
 @too_cli.command()

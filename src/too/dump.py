@@ -179,6 +179,7 @@ def dump_sdss_id_tables(
     last_updated: str,
     database: PeeweeDatabaseConnection,
     root: pathlib.Path | str = ".",
+    overwrite: bool = False,
 ):
     """Dumps the SDSS ID tables to CSV files.
 
@@ -191,6 +192,8 @@ def dump_sdss_id_tables(
         The database connection.
     root
         The root directory where to save the CSV files.
+    overwrite
+        Whether to overwrite the CSV files if they already exist.
 
     """
 
@@ -200,7 +203,7 @@ def dump_sdss_id_tables(
     sdss_id_flat_path = root / "sdss_id_flat.csv"
     sdss_id_stacked_path = root / "sdss_id_stacked.csv"
 
-    if sdss_id_flat_path.exists() or sdss_id_stacked_path.exists():
+    if (sdss_id_flat_path.exists() or sdss_id_stacked_path.exists()) and not overwrite:
         raise FileExistsError("SDSS ID CSV files already exist.")
 
     sdss_id_stacked_data = polars.read_database(
