@@ -47,6 +47,13 @@ rm -f current
 ln -s too_targets_apo_$DATE.parquet current
 cd $CWD
 
+# And the same for LCO
+too dump-targets $SDSSCORE_LCO_TOO/too_targets_lco_$DATE.parquet --observatory LCO
+cd $SDSSCORE_LCO_TOO
+rm -f current
+ln -s too_targets_lco_$DATE.parquet current
+cd $CWD
+
 # Dump the new sdss_id records
 mkdir -p $SDSS_ID_DIFFS_PATH/$DATE
 too dump-sdss-id --root $SDSS_ID_DIFFS_PATH/$DATE $DATE
