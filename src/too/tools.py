@@ -297,7 +297,7 @@ def create_mock_catalogue(
             elif column == "active":
                 col_data = [True] * len(data)
             elif column == "observe_from_mjd":
-                col_data = [get_sjd("APO")] * len(data)
+                col_data = [get_sjd("APO") - 1] * len(data)
             elif column == "observe_until_mjd":
                 col_data = [get_sjd("APO") + 10] * len(data)
             elif column == "observed":
