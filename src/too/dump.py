@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 import numpy
 import polars
 from peewee import JOIN, fn
-from astropy.time import Time
+
+from sdsstools.time import get_sjd
 
 from too import log
 from too.tools import match_fields
@@ -101,9 +102,7 @@ def dump_targets_to_parquet(
         TooMeta.observe_until_mjd,
     )
 
-    now = Time.now()
-    now.format = "mjd"
-    mjd_now = int(now.value)
+    mjd_now = get_sjd(observatory)
 
     targets = (
         TooTarget.select(
@@ -120,7 +119,7 @@ def dump_targets_to_parquet(
             on=(Assn2Focal.catalogid == Catalog.catalogid),
         )
         .join(Configuration, JOIN.LEFT_OUTER)
-        .where(TooMeta.observe_until_mjd > mjd_now)
+        .where(TooMeta.observe_until_mjd > mjd_now)  # type: ignore
         .group_by(*columns)
         .dicts()
     )
