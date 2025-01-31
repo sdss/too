@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import numpy
 import polars
 from peewee import JOIN, fn
+from astropy.time import Time
 
 from too import log
 from too.tools import match_fields
@@ -97,7 +98,12 @@ def dump_targets_to_parquet(
         TooMeta.sky_brightness_mode,
         TooMeta.n_exposures,
         TooMeta.observe_from_mjd,
+        TooMeta.observe_until_mjd,
     )
+
+    now = Time.now()
+    now.format = "mjd"
+    mjd_now = int(now.value)
 
     targets = (
         TooTarget.select(
@@ -114,6 +120,7 @@ def dump_targets_to_parquet(
             on=(Assn2Focal.catalogid == Catalog.catalogid),
         )
         .join(Configuration, JOIN.LEFT_OUTER)
+        .where(TooMeta.observe_until_mjd > mjd_now)
         .group_by(*columns)
         .dicts()
     )
@@ -149,6 +156,7 @@ def dump_targets_to_parquet(
             "sky_brightness_mode": polars.String,
             "n_exposures": polars.Int32,
             "observe_from_mjd": polars.Int32,
+            "observe_until_mjd": polars.Int32,
             "jd": polars.List(polars.Float32),
         },
     )
