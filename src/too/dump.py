@@ -98,6 +98,7 @@ def dump_targets_to_parquet(
         TooMeta.inertial,
         TooMeta.sky_brightness_mode,
         TooMeta.n_exposures,
+        TooMeta.active,
         TooMeta.observe_from_mjd,
         TooMeta.observe_until_mjd,
     )
@@ -119,7 +120,10 @@ def dump_targets_to_parquet(
             on=(Assn2Focal.catalogid == Catalog.catalogid),
         )
         .join(Configuration, JOIN.LEFT_OUTER)
-        .where(TooMeta.observe_until_mjd > mjd_now)  # type: ignore
+        .where(
+            TooMeta.active,
+            (TooMeta.observe_until_mjd.is_null() | TooMeta.observe_until_mjd > mjd_now),
+        )
         .group_by(*columns)
         .dicts()
     )
