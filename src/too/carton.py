@@ -94,11 +94,18 @@ def backup_sdss_id_tables(
 def update_sdss_id_tables(database: PeeweeDatabaseConnection):
     """Updates the SDSS ID tables."""
 
+    from target_selection import log as ts_log
     from target_selection.sdss_id import append_to_sdss_id
     from target_selection.sdss_id.append_to_sdss_id import database as append_database
     from target_selection.sdss_id.create_catalogidx_to_catalogidy import (
         database as cidx_database,
     )
+
+    # Override log
+    if ts_log.sh in ts_log.handlers:
+        ts_log.removeHandler(ts_log.sh)
+    ts_log.addHandler(log.sh)
+    ts_log.sh = log.sh
 
     # The sdss_id code uses whichever database profile is default for the machine.
     # This is necessary to ensure that the database that we pass to this function
