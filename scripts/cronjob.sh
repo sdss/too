@@ -63,9 +63,12 @@ SDSS_ID_STACKED_DIFFS=$SDSS_ID_DIFFS_PATH/$DATE/sdss_id_stacked.csv
 
 # Load the new sdss_id records in the pipelines sdss5db database
 module load postgresql/15.3
+
+echo "Loading sdss_id diffs into pipelines database"
 psql -h pipelines.sdss.org -U u0931042 -d sdss5db -c "\copy catalogdb.sdss_id_flat FROM '$SDSS_ID_FLAT_DIFFS' CSV HEADER;"
 psql -h pipelines.sdss.org -U u0931042 -d sdss5db -c "\copy catalogdb.sdss_id_stacked FROM '$SDSS_ID_STACKED_DIFFS' CSV HEADER;"
 
 # Also update the catalogdb sdss_id tables in operations
+echo "Loading sdss_id diffs into operations database"
 psql -U sdss -h operations.sdss.org sdss5db -c "\copy catalogdb.sdss_id_flat FROM '$SDSS_ID_FLAT_DIFFS' CSV HEADER"
 psql -U sdss -h operations.sdss.org sdss5db -c "\copy catalogdb.sdss_id_stacked FROM '$SDSS_ID_STACKED_DIFFS' CSV HEADER"
