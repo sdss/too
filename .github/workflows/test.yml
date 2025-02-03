@@ -4,9 +4,13 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
+      - 'container/**'
+      - 'scripts/**'
   pull_request:
     paths-ignore:
       - 'docs/**'
+      - 'container/**'
+      - 'scripts/**'
 
 jobs:
   build:
