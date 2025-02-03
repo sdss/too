@@ -33,7 +33,7 @@ export BN_HEALPIX=/uufs/chpc.utah.edu/common/home/sdss50/sdsswork/target/bn_heal
 DATE=`date "+%Y-%m-%d"`
 
 # Load the virtual environment with the code
-cd /uufs/chpc.utah.edu/common/home/sdssunit/software/github/sdss/too
+cd /uufs/chpc.utah.edu/common/home/sdssunit/software/github/sdss/too/current
 source .venv/bin/activate
 
 # Process the ToO targets, update the carton, and update sdss_id tables
