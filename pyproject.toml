@@ -1,6 +1,6 @@
 [project]
 name = "sdss-too"
-version = "1.0.0"
+version = "1.0.1"
 description = "Targets of Opportunity (ToO) for SDSS-V"
 authors = [ { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" } ]
 license = { text = "BSD-3-Clause" }
