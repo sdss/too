@@ -1,6 +1,6 @@
 # Install uv
 FROM python:3.12-slim-bookworm AS builder
-COPY --from=ghcr.io/astral-sh/uv:python3.12-bookworm-slim /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Change the working directory to the `app` directory
 WORKDIR /app
