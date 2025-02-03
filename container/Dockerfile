@@ -1,15 +1,24 @@
-FROM python:3.12-slim-bullseye
+# Install uv
+FROM python:3.12-slim-bookwork AS builder
+COPY --from=ghcr.io/astral-sh/uv:python3.12-bookworm-slim /uv /uvx /bin/
 
-LABEL org.opencontainers.image.authors="Jose Sanchez-Gallego, gallegoj@uw.edu"
-LABEL org.opencontainers.image.source=https://github.com/sdss/too
+# Change the working directory to the `app` directory
+WORKDIR /app
 
-WORKDIR /opt
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-editable
 
-RUN apt update && apt install -y git build-essential
+# Copy the project into the intermediate image
+ADD . /app
 
-COPY . too
+# Sync the project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable
 
-RUN pip3 install -U pip setuptools wheel
-RUN cd too && pip3 install .
+FROM python:3.12-slim-bookwork
 
-RUN rm -Rf too
+# Copy the environment, but not the source code
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
