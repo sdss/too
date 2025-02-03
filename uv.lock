@@ -1396,7 +1396,7 @@ wheels = [
 
 [[package]]
 name = "sdss-too"
-version = "0.1.0a0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "adbc-driver-postgresql" },
