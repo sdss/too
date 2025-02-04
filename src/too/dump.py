@@ -124,7 +124,7 @@ def dump_targets_to_parquet(
             TooMeta.active,
             (
                 TooMeta.observe_until_mjd.is_null()
-                | (TooMeta.observe_until_mjd > mjd_now)  # type: ignore
+                | (TooMeta.observe_until_mjd >= mjd_now)  # type: ignore
             ),
         )
         .group_by(*columns)

@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### 🔧 Fixed
+
+* Use `>=` when in `dump_targets_to_parquet` when comparing the current MJD with `observe_until_mjd`.
+
+
 ## 1.0.1 - 2025-02-03
 
 ### 🐛 Fix
