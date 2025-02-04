@@ -181,9 +181,13 @@ def dump_targets_to_parquet(
         f"targets of {len(targets)} total."
     )
 
-    # Add bright neighbour and magnitude limit check columns.
-    log.info(f"{observatory}: adding bright neighbour and magnitude limit columns.")
-    bn = add_bright_limits_columns(elligible, database, observatories=[observatory])
+    if len(elligible) > 0:
+        # Add bright neighbour and magnitude limit check columns.
+        log.info(f"{observatory}: adding bright neighbour and magnitude limit columns.")
+        bn = add_bright_limits_columns(elligible, database, observatories=[observatory])
+    else:
+        log.warning(f"{observatory}: no elligible targets found.")
+        bn = elligible.clone()
 
     log.debug(f"Saving data to {path!s}.")
     bn.drop_in_place("jd")
