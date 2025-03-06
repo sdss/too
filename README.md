@@ -28,6 +28,7 @@ Target of opportunity files must be CSV or [Parquet](https://parquet.apache.org)
 | Column              | Type    | Description                                                                                                          |
 |---------------------|---------|----------------------------------------------------------------------------------------------------------------------|
 | too_id              | int64   | Unique identifier for the ToO target. [required]                                                                     |
+| program             | string  | The time-domain program that provided this target.                                                                   |
 | fiber_type          | string  | Type of fiber to be used to observe the target (`APOGEE` or `BOSS`). [required]                                      |
 | catalogid           | int64   | catalogid for this target, if already matched.                                                                       |
 | sdss_id             | int64   | sdss_id for this target, if already matched.                                                                         |

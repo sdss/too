@@ -271,7 +271,10 @@ def create_mock_too_catalogue(
     df.drop_in_place("keep_cid")
     df = df.sample(df.height, shuffle=True)  # Shuffle
 
-    df = df.with_columns(polars.int_range(1, df.height + 1).alias("too_id"))
+    df = df.with_columns(
+        polars.int_range(1, df.height + 1).alias("too_id"),
+        program=polars.lit("TNS", dtype=polars.String),
+    )
 
     # Fill out some columns
     fiber_type = numpy.array(["APOGEE"] * df.height)

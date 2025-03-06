@@ -130,6 +130,7 @@ CREATE TABLE catalogdb.catalog_to_twomass_psc (
 
 CREATE TABLE catalogdb.too_target (
     too_id BIGINT PRIMARY KEY,
+    program TEXT,
     fiber_type TEXT,
     catalogid BIGINT,
     sdss_id BIGINT,

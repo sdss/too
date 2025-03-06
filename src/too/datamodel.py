@@ -19,6 +19,7 @@ __all__ = ["too_dtypes"]
 
 too_dtypes: polars.type_aliases.SchemaDefinition = {
     "too_id": polars.Int64,
+    "program": polars.String,
     "fiber_type": polars.String,
     "catalogid": polars.Int64,
     "sdss_id": polars.Int64,
@@ -84,6 +85,7 @@ too_metadata_columns = [
 
 column_descriptions = {
     "too_id": "Unique identifier for the ToO target. [required]",
+    "program": "The time-domain program that provided this target.",
     "fiber_type": "Type of fiber to be used to observe the target (`APOGEE` or `BOSS`). [required]",
     "catalogid": "catalogid for this target, if already matched.",
     "sdss_id": "sdss_id for this target, if already matched.",

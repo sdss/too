@@ -67,6 +67,10 @@ def test_cli_only_load(
     assert n_loaded > 0
     assert catalogdb.ToO_Metadata.select().count() == n_loaded
 
+    first = catalogdb.ToO_Target.select().first()
+    assert first is not None
+    assert first.program == "TNS"
+
 
 def test_cli_only_process(tmp_path_factory: pytest.TempPathFactory, mock_validation):
     database = connect_to_database("sdss5db_too_test", user="sdss", host="localhost")

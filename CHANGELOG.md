@@ -2,6 +2,10 @@
 
 ## Next version
 
+### 🚀 New
+
+* Add `program` as an optional field to the ToO tables.
+
 ### 🔧 Fixed
 
 * Use `>=` when in `dump_targets_to_parquet` when comparing the current MJD with `observe_until_mjd`.
