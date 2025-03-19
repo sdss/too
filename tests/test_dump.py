@@ -49,6 +49,9 @@ def test_dump(
     assert df.height > 0
     assert df.height < too_mock_sample.height
 
+    assert "program" in df.columns
+    assert df.filter(polars.col.program == "TNS").height == df.height
+
 
 def test_dump_invalid_observatory(database: PeeweeDatabaseConnection):
     with pytest.raises(ValueError):
