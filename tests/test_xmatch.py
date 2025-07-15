@@ -59,7 +59,7 @@ def test_xmatch_1():
     )
 
     assert n_target_id == n_too
-    assert TempCatalog.select().count() == 30912
+    assert TempCatalog.select().count() == 30325
 
 
 def test_xmatch_2(too_mock: polars.DataFrame):
@@ -78,7 +78,7 @@ def test_xmatch_2(too_mock: polars.DataFrame):
     TempCatalog = xmatch_planner.get_output_model(temporary=True)
 
     assert TempCatalog is not None
-    assert TempCatalog.select().count() == 62867
+    assert TempCatalog.select().count() == 60602
 
 
 def test_xmatch_3():
@@ -96,10 +96,57 @@ def test_xmatch_4(too_mock: polars.DataFrame):
     Model = xmatch_planner.get_output_model(temporary=False)
 
     assert Model is not None and Model._meta.table_name == "catalog"
-    assert Model.select().count() == 3093109
+    assert Model.select().count() == 3088044
 
 
 def test_xmatch_5(caplog: pytest.LogCaptureFixture):
     xmatch_too_targets(catalogdb.database)
 
     assert caplog.record_tuples[-1][2] == "All ToO targets are already matched."
+
+
+def test_xmatch_duplicates(too_mock: polars.DataFrame):
+    """Tests that xmatch assigns the same catalogid to ToOs that are the same object."""
+
+    # Select a target that we have already loaded but change its too_id.
+    # Load it to too_target.
+    too_mock_sample = too_mock[10:500]
+    too_mock_sample[0, "too_id"] = 1234567890
+
+    load_too_targets(too_mock_sample, catalogdb.database)
+
+    # Now perform the cross-match.
+    xmatch_planner = xmatch_too_targets(catalogdb.database, overwrite=True)
+    assert xmatch_planner is not None
+
+    # We should now have two targets, with too_id=11 and too_id=1234567890, both
+    # of which are associated with the same catalogid. In both cases best=True
+    # (this is a special allowance for too_target).
+
+    # First check that too_id=1234567890 was added to the database in phase 2.
+    assert (
+        catalogdb.CatalogToToO_Target.select()
+        .where(catalogdb.CatalogToToO_Target.target == 1234567890)
+        .count()
+        == 1
+    )
+
+    c2t_obj = (
+        catalogdb.CatalogToToO_Target.select()
+        .where(catalogdb.CatalogToToO_Target.target == 1234567890)
+        .first()
+    )
+    assert c2t_obj.best is True
+    assert c2t_obj.catalogid is not None
+    assert c2t_obj.added_by_phase == 2
+
+    # Check that there are two matches for the same catalogid with best=True.
+    assert (
+        catalogdb.CatalogToToO_Target.select()
+        .where(
+            catalogdb.CatalogToToO_Target.catalog == c2t_obj.catalogid,
+            catalogdb.CatalogToToO_Target.best == True,  # noqa: E712
+        )
+        .count()
+        == 2
+    )

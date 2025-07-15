@@ -55,6 +55,7 @@ TOO_XMATCH_CONFIG = {
                 "parallax_column": "parallax",
                 "has_missing_coordinates": False,
                 "epoch": 2016.0,
+                "allow_multiple_bests": True,
             }
         },
         "join_paths": [

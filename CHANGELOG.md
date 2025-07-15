@@ -5,6 +5,7 @@
 ### 🚀 New
 
 * Add `program` as an optional field to the ToO tables.
+* Use the `allow_multiple_bests` option in the cross-match configuration.
 
 ### 🔧 Fixed
 
