@@ -11,7 +11,7 @@ requires-python = ">=3.12,<3.13"
 
 dependencies = [
     "sdsstools>=1.8.2",
-    "sdss-target-selection>=1.4.1",
+    "sdss-target-selection>=1.4.2",
     "adbc-driver-postgresql>=1.2.0",
     "httpx>=0.27.0",
     "rich>=13.7.0",
