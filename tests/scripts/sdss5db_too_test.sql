@@ -499,10 +499,10 @@ ALTER SEQUENCE catalogdb.sdss_id_flat_pk_seq RESTART WITH 300000000;
 ALTER SEQUENCE sandbox.sdss_id_stacked_sdss_id_seq RESTART WITH 300000000;
 ALTER SEQUENCE sandbox.sdss_id_flat_pk_seq RESTART WITH 300000000;
 
-CREATE ROLE sdss_id;
+CREATE ROLE sdss_user;
 
-GRANT ALL ON TABLE sandbox.sdss_id_stacked TO sdss_id;
-GRANT ALL ON TABLE sandbox.sdss_id_flat TO sdss_id;
+GRANT ALL ON TABLE sandbox.sdss_id_stacked TO sdss_user;
+GRANT ALL ON TABLE sandbox.sdss_id_flat TO sdss_user;
 
 ALTER ROLE sdss SET search_path TO public,catalogdb,targetdb,opsdb_apo;
 ALTER ROLE sdss_user SET search_path TO public,catalogdb,targetdb,opsdb_apo;
