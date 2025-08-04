@@ -1,5 +1,12 @@
 # Changelog
 
+## Next release
+
+### ✨ Improved
+
+* Drop temporary sdss_id tables after a successful update.
+
+
 ## 1.1.0 - 2025-07-26
 
 ### 🚀 New

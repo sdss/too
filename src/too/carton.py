@@ -95,7 +95,14 @@ def update_sdss_id_tables(database: PeeweeDatabaseConnection):
     """Updates the SDSS ID tables."""
 
     from target_selection import log as ts_log
-    from target_selection.sdss_id import append_to_sdss_id
+    from target_selection.sdss_id import (
+        SdssIdFlatAddendum,
+        SdssIdStackedAddendum,
+        TempCatalogidV21,
+        TempCatalogidV25,
+        TempCatalogidV31,
+        append_to_sdss_id,
+    )
     from target_selection.sdss_id.append_to_sdss_id import database as append_database
     from target_selection.sdss_id.create_catalogidx_to_catalogidy import (
         database as cidx_database,
@@ -130,5 +137,16 @@ def update_sdss_id_tables(database: PeeweeDatabaseConnection):
     apend_inst.add_to_sdss_id_stacked(database)
     apend_inst.create_sdss_id_flat_addendum(database)
     apend_inst.add_to_sdss_id_flat(database)
+
+    # Drop temporary tables after successful update.
+    append_database.drop_tables(
+        [
+            TempCatalogidV21,
+            TempCatalogidV25,
+            TempCatalogidV31,
+            SdssIdStackedAddendum,
+            SdssIdFlatAddendum,
+        ]
+    )
 
     log.info("SDSS ID tables have been updated.")
