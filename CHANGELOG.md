@@ -5,6 +5,7 @@
 ### ✨ Improved
 
 * Drop temporary sdss_id tables after a successful update.
+* Allow removing invalid targets from the input files in CLI.
 
 
 ## 1.1.0 - 2025-07-26

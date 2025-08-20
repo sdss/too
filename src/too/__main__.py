@@ -105,6 +105,13 @@ def process(
             rich_help_panel="Options for loading ToOs and running the too carton.",
         ),
     ] = True,
+    remove_invalid: Annotated[
+        bool,
+        typer.Option(
+            help="Remove invalid targets from the input files.",
+            rich_help_panel="Options for loading ToOs and running the too carton.",
+        ),
+    ] = False,
 ):
     """Ingest and process new lists of ToOs."""
 
@@ -157,6 +164,12 @@ def process(
             else:
                 targets = targets.vstack(new_targets)
         targets = targets.sort(["added_on", "too_id"])
+
+        if remove_invalid:
+            targets = targets.filter(
+                polars.col.ra.is_not_null(),
+                polars.col.dec.is_not_null(),
+            )
 
         log.info("Loading targets into the database.")
         load_too_targets(
