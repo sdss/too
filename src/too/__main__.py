@@ -21,7 +21,7 @@ class NaturalOrderGroup(TyperGroup):
     """A Typer group that lists commands in order of definition."""
 
     def list_commands(self, ctx):
-        return self.commands.keys()
+        return list(self.commands.keys())
 
 
 too_cli = typer.Typer(
