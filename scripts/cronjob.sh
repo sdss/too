@@ -37,7 +37,7 @@ cd /uufs/chpc.utah.edu/common/home/sdssunit/software/github/sdss/too/current
 source .venv/bin/activate
 
 # Process the ToO targets, update the carton, and update sdss_id tables
-too process --ignore-invalid --cross-match --run-carton -v $TOO_TARGET_FILES
+too process --ignore-invalid --cross-match --run-carton --remove-invalid -v $TOO_TARGET_FILES
 
 # Dump the ToO targets to sdsscore. They will be committed automatically. Create
 # a symlink to the current file.
