@@ -7,6 +7,11 @@
 * Drop temporary sdss_id tables after a successful update.
 * Allow removing invalid targets from the input files in CLI.
 
+### ⚙️ Engineering
+
+* Use `ty` for type checking.
+* Update GitHub Actions workflows to use latest action versions.
+
 
 ## 1.1.0 - 2025-07-26
 
