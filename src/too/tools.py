@@ -59,7 +59,7 @@ def read_too_file(
         if path.suffix == ".parquet":
             targets = polars.read_parquet(path)
         elif path.suffix == ".csv":
-            targets = polars.read_csv(path)  # type: ignore
+            targets = polars.read_csv(path)
         else:
             raise ValueError(f"Invalid file type {path.suffix!r}")
 

@@ -183,7 +183,7 @@ class DesignMode:
     def __init__(self, database: PeeweeDatabaseConnection, label: str | None = None):
         from sdssdb.peewee.sdss5db.targetdb import DesignMode as DesignModeDB
 
-        DesignModeDB._meta.database(database)  # type:ignore
+        DesignModeDB._meta.database(database)
 
         if label is not None:
             self.fromdb(label=label)
@@ -474,8 +474,8 @@ def bn_validation(
     ra_off, dec_off = _offset_radec(
         ra=targets["ra"].to_numpy(),
         dec=targets["dec"].to_numpy(),
-        delta_ra=delta_ra,  # type: ignore
-        delta_dec=delta_dec,  # type: ignore
+        delta_ra=delta_ra,
+        delta_dec=delta_dec,
     )
     # get proper motions
     pmra = targets["pmra"].to_numpy()

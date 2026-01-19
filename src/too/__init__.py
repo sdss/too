@@ -14,7 +14,7 @@ import sdssdb
 from sdsstools import get_logger, get_package_version
 
 
-sdssdb.autoconnect = False
+sdssdb.autoconnect = False  # type: ignore
 
 
 NAME = "sdss-too"

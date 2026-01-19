@@ -57,14 +57,14 @@ def test_connect_to_database_fails():
 
 def test_models_exist():
     assert catalogdb.Gaia_DR3.table_exists()
-    assert catalogdb.CatalogToGaia_DR3.table_exists()  # type: ignore
+    assert catalogdb.CatalogToGaia_DR3.table_exists()
     assert catalogdb.Gaia_DR3.select().count() > 1
-    assert catalogdb.CatalogToGaia_DR3.select().count() > 1  # type: ignore
+    assert catalogdb.CatalogToGaia_DR3.select().count() > 1
 
     assert catalogdb.TwoMassPSC.table_exists()
-    assert catalogdb.CatalogToTwoMassPSC.table_exists()  # type: ignore
+    assert catalogdb.CatalogToTwoMassPSC.table_exists()
     assert catalogdb.TwoMassPSC.select().count() > 1
-    assert catalogdb.CatalogToTwoMassPSC.select().count() > 1  # type: ignore
+    assert catalogdb.CatalogToTwoMassPSC.select().count() > 1
 
     catalogdb.ToO_Target.bind(catalogdb.database)
     assert catalogdb.ToO_Target.table_exists()

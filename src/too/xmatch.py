@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import peewee
 import polars
@@ -130,8 +130,8 @@ def xmatch_too_targets(
 
     assert database.connected, "Database is not connected"
 
-    too_target_schema: str = ToO_Target._meta.schema  # type:ignore
-    too_target_table_name: str = ToO_Target._meta.table_name  # type:ignore
+    too_target_schema: str = ToO_Target._meta.schema
+    too_target_table_name: str = ToO_Target._meta.table_name
     catalog_to_target_table_name: str = f"catalog_to_{too_target_table_name}"
 
     too_rel_fqtn = f"{too_target_schema}.{catalog_to_target_table_name}"
@@ -154,7 +154,7 @@ def xmatch_too_targets(
     plan_config["1.2.0"]["debug"] = log.sh.level
 
     plan = plan or TOO_XMATCH_PLAN
-    version_id: int = plan_config[plan]["version_id"]
+    version_id = cast(int, plan_config[plan]["version_id"])
 
     # This is just a sanity check. We need to use version_id=31 and maybe we should
     # just hardcode it.

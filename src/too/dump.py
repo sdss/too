@@ -57,8 +57,11 @@ def dump_targets_to_parquet(
     # Check that the model connection is the same. This should be the case as
     # long as database has been created using connect_to_database(), which will
     # update the models.
-    if database and database != catalogdb.Catalog._meta.database:  # type: ignore
+    if database and database != catalogdb.Catalog._meta.database:
         raise ValueError("Mismatched database connection between too and models.")
+
+    if database is None:
+        raise ValueError("A database connection must be provided.")
 
     catalogdb.Catalog.bind(database)
     catalogdb.CatalogToToO_Target.bind(database)
@@ -125,7 +128,7 @@ def dump_targets_to_parquet(
             TooMeta.active,
             (
                 TooMeta.observe_until_mjd.is_null()
-                | (TooMeta.observe_until_mjd >= mjd_now)  # type: ignore
+                | (TooMeta.observe_until_mjd >= mjd_now)
             ),
         )
         .group_by(*columns)
