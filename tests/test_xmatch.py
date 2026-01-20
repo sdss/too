@@ -59,7 +59,7 @@ def test_xmatch_1():
     )
 
     assert n_target_id == n_too
-    assert TempCatalog.select().count() == 30325
+    assert TempCatalog.select().count() == 30407
 
 
 def test_xmatch_2(too_mock: polars.DataFrame):
@@ -78,7 +78,7 @@ def test_xmatch_2(too_mock: polars.DataFrame):
     TempCatalog = xmatch_planner.get_output_model(temporary=True)
 
     assert TempCatalog is not None
-    assert TempCatalog.select().count() == 60602
+    assert TempCatalog.select().count() == 61498
 
 
 def test_xmatch_3():
@@ -96,7 +96,7 @@ def test_xmatch_4(too_mock: polars.DataFrame):
     Model = xmatch_planner.get_output_model(temporary=False)
 
     assert Model is not None and Model._meta.table_name == "catalog"
-    assert Model.select().count() == 3088044
+    assert Model.select().count() == 3090549
 
 
 def test_xmatch_5(caplog: pytest.LogCaptureFixture):
@@ -111,7 +111,7 @@ def test_xmatch_duplicates(too_mock: polars.DataFrame):
     # Select a target that we have already loaded but change its too_id.
     # Load it to too_target.
     too_mock_sample = too_mock[10:500]
-    too_mock_sample[0, "too_id"] = 1234567890
+    too_mock_sample[10, "too_id"] = 1234567890
 
     load_too_targets(too_mock_sample, catalogdb.database)
 
@@ -119,7 +119,7 @@ def test_xmatch_duplicates(too_mock: polars.DataFrame):
     xmatch_planner = xmatch_too_targets(catalogdb.database, overwrite=True)
     assert xmatch_planner is not None
 
-    # We should now have two targets, with too_id=11 and too_id=1234567890, both
+    # We should now have two targets, with too_id=21 and too_id=1234567890, both
     # of which are associated with the same catalogid. In both cases best=True
     # (this is a special allowance for too_target).
 

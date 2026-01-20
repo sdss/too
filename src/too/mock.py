@@ -86,11 +86,12 @@ def get_sample_data(
 def get_sample_targets(
     table: Literal["gaia_dr3", "twomass", "photoobj"],
     n_targets: int,
+    seed: int | None = None,
 ):
     """Returns a sample of table targets."""
 
     data = get_sample_data(table, lazy=False)
-    sample = data.sample(n_targets)
+    sample = data.sample(n_targets, seed=seed, shuffle=True)
 
     if table == "gaia_dr3":
         col_mapping = {
@@ -146,6 +147,7 @@ def create_mock_too_catalogue(
     fraction_known_twomass: float = 0.1,
     catalogid_likelihood: float = 0.2,
     design_modes: list[str] = ["bright", "dark"],
+    seed: int | None = None,
 ):
     """Creates a mock ToO catalogue.
 
@@ -177,6 +179,8 @@ def create_mock_too_catalogue(
     design_modes
         A list of design modes to randomly assign to the ``sky_brightness_mode``
         column.
+    seed
+        An optional random seed to use.
 
     Returns
     -------
@@ -189,24 +193,32 @@ def create_mock_too_catalogue(
     gaia_known_targets = get_sample_targets(
         "gaia_dr3",
         int(n_known * fraction_known_gaia),
+        seed=seed,
     )
 
     twomass_known_targets = get_sample_targets(
         "twomass",
         int(n_known * fraction_known_twomass),
+        seed=seed,
     )
 
     sdss_known_targets = get_sample_targets(
         "photoobj",
         int(n_known * fraction_known_sdss),
+        seed=seed,
     )
-    sdss_known_targets = sdss_known_targets.with_columns(catalogid=None, sdss_id=None)
+    sdss_known_targets = sdss_known_targets.with_columns(
+        catalogid=None,
+        sdss_id=None,
+        seed=seed,
+    )
 
     n_unknown = n_targets * fraction_unknown
 
     gaia_unknown_targets = get_sample_targets(
         "gaia_dr3",
         int(n_unknown * fraction_unknown_gaia),
+        seed=seed,
     )
     gaia_unknown_targets = gaia_unknown_targets.with_columns(
         gaia_dr3_source_id=None,
@@ -219,6 +231,7 @@ def create_mock_too_catalogue(
     sdss_unknown_targets = get_sample_targets(
         "photoobj",
         int(n_unknown * fraction_unknown_sdss),
+        seed=seed,
     )
     sdss_unknown_targets = sdss_unknown_targets.with_columns(
         catalogid=None,
@@ -269,12 +282,16 @@ def create_mock_too_catalogue(
         sdss_id=polars.when(polars.col.keep_cid).then(polars.col.sdss_id),
     )
     df.drop_in_place("keep_cid")
-    df = df.sample(df.height, shuffle=True)  # Shuffle
+    df = df.sample(df.height, shuffle=True, seed=seed)  # Shuffle
 
     df = df.with_columns(
         polars.int_range(1, df.height + 1).alias("too_id"),
         program=polars.lit("TNS", dtype=polars.String),
     )
+
+    # Drop column "seed"
+    if "seed" in df.columns:
+        df = df.drop("seed")
 
     # Fill out some columns
     fiber_type = numpy.array(["APOGEE"] * df.height)

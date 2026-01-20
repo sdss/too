@@ -103,7 +103,7 @@ def too_mock():
     numpy.random.seed(SEED)
     polars.set_random_seed(SEED)
 
-    sample = create_mock_too_catalogue()
+    sample = create_mock_too_catalogue(seed=SEED)
 
     yield sample
 
