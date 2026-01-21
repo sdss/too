@@ -166,10 +166,15 @@ def process(
         targets = targets.sort(["added_on", "too_id"])
 
         if remove_invalid:
+            n_pre = targets.height
             targets = targets.filter(
                 polars.col.ra.is_not_null(),
                 polars.col.dec.is_not_null(),
+                polars.col.sky_brightness_mode.is_not_null(),
             )
+
+            if (n_diff := n_pre - targets.height) > 0:
+                log.warning(f"Removed {n_diff} invalid targets from the input files.")
 
         log.info("Loading targets into the database.")
         load_too_targets(

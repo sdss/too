@@ -6,6 +6,7 @@
 
 * Drop temporary sdss_id tables after a successful update.
 * Allow removing invalid targets from the input files in CLI.
+* Remove targets with null `sky_brightness_mode` when `--remove-invalid` is set.
 
 ### ⚙️ Engineering
 
