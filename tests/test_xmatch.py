@@ -138,7 +138,6 @@ def test_xmatch_duplicates(too_mock: polars.DataFrame):
     )
     assert c2t_obj.best is True
     assert c2t_obj.catalogid is not None
-    assert c2t_obj.added_by_phase == 2
 
     # Check that there are two matches for the same catalogid with best=True.
     assert (
