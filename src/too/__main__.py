@@ -171,6 +171,7 @@ def process(
                 polars.col.ra.is_not_null(),
                 polars.col.dec.is_not_null(),
                 polars.col.sky_brightness_mode.is_not_null(),
+                polars.col.fiber_type.str.to_uppercase().is_in(["BOSS", "APOGEE"]),
             )
 
             if (n_diff := n_pre - targets.height) > 0:
